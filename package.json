@@ -1,0 +1,16 @@
+{
+  "name": "18-before-18",
+  "version": "0.1.0",
+  "private": true,
+  "description": "18 Before 18 — a real-money financial training ground for teenagers (MERN stack)",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build:client": "npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

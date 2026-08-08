@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>18 Before 18 — Practice adulthood before adulthood gets expensive</title>
+<style>
+  :root{
+    --bg:#f6f7fb;
+    --ink:#11131a;
+    --muted:#656b7a;
+    --card:#ffffff;
+    --line:#e7e9ef;
+    --accent:#6d4aff;
+    --accentSoft:#eeeaff;
+    --good:#14804a;
+    --goodSoft:#e9f8ef;
+    --warn:#9a6700;
+    --warnSoft:#fff5d6;
+    --danger:#b42318;
+    --dangerSoft:#ffefed;
+    --radius:22px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 10% 0%, #ebe7ff 0, transparent 30rem),
+      radial-gradient(circle at 100% 18%, #e7fff0 0, transparent 27rem),
+      var(--bg);
+  }
+  a{text-decoration:none;color:inherit}
+  button,input{font:inherit}
+  .wrap{width:min(1160px,calc(100% - 36px));margin:auto}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:850;letter-spacing:-.03em}
+  .logo{
+    width:40px;height:40px;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#795cff,#4c2bd1);color:#fff;font-weight:900
+  }
+  .navlinks{display:flex;gap:22px;align-items:center;font-size:14px;color:#464b59}
+  .btn{
+    border:none;border-radius:999px;padding:12px 18px;font-weight:800;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center
+  }
+  .btn.primary{background:var(--ink);color:#fff}
+  .btn.secondary{background:#fff;border:1px solid var(--line)}
+  .hero{
+    display:grid;grid-template-columns:1.03fr .97fr;gap:50px;align-items:center;
+    padding:68px 0 54px;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;background:white;border:1px solid var(--line);
+    padding:8px 12px;border-radius:999px;font-size:13px;font-weight:800;color:#4c5161
+  }
+  h1{
+    font-size:clamp(48px,7vw,82px);line-height:.98;letter-spacing:-.055em;
+    margin:20px 0 22px;max-width:780px
+  }
+  .hero p{font-size:20px;line-height:1.55;color:#505666;max-width:650px}
+  .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+  .micro{font-size:13px;color:var(--muted);margin-top:13px}
+  .phone{
+    background:#151821;border-radius:34px;padding:12px;box-shadow:0 28px 80px rgba(24,26,38,.22)
+  }
+  .phone-inner{background:#fff;border-radius:26px;padding:20px;min-height:610px}
+  .toprow{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#ebe8ff}
+  .balance{
+    background:linear-gradient(135deg,#6d4aff,#8464ff);color:white;border-radius:22px;padding:20px
+  }
+  .balance .label{font-size:13px;opacity:.82}
+  .balance .amount{font-size:42px;font-weight:900;letter-spacing:-.04em;margin:4px 0}
+  .money-row{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.16)}
+  .money-row:last-child{border-bottom:none}
+  .bill{
+    margin-top:14px;border:1px solid var(--line);border-radius:17px;padding:15px;
+    display:flex;justify-content:space-between;gap:14px;align-items:center
+  }
+  .bill-left{display:flex;gap:12px;align-items:center}
+  .icon{
+    width:38px;height:38px;border-radius:12px;background:#f1efff;display:grid;place-items:center
+  }
+  .bill small{display:block;color:var(--muted);margin-top:3px}
+  .status{font-size:12px;font-weight:850;border-radius:999px;padding:6px 9px}
+  .due{background:var(--warnSoft);color:var(--warn)}
+  .paid{background:var(--goodSoft);color:var(--good)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px 0 78px}
+  .stat{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .stat .num{font-size:40px;font-weight:900;letter-spacing:-.04em}
+  .stat p{margin:6px 0 0;color:var(--muted);line-height:1.45}
+  section{padding:76px 0}
+  .section-head{max-width:780px;margin-bottom:34px}
+  .section-head h2{font-size:clamp(36px,5vw,58px);line-height:1.02;letter-spacing:-.045em;margin:0 0 14px}
+  .section-head p{font-size:18px;line-height:1.55;color:var(--muted);margin:0}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;min-height:225px}
+  .step .n{width:34px;height:34px;border-radius:11px;background:var(--accentSoft);color:var(--accent);display:grid;place-items:center;font-weight:900}
+  .step h3{font-size:20px;margin:22px 0 8px}
+  .step p{color:var(--muted);line-height:1.5;margin:0}
+  .demo-shell{
+    display:grid;grid-template-columns:.92fr 1.08fr;gap:18px;background:#121521;
+    border-radius:30px;padding:18px
+  }
+  .panel{background:#fff;border-radius:22px;padding:22px}
+  .panel.dark{background:#1e2130;color:white}
+  .panel h3{margin:0 0 6px;font-size:22px}
+  .sub{font-size:14px;line-height:1.5;color:var(--muted)}
+  .dark .sub{color:#aab1c2}
+  .badge{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#2b3042;color:#d5daea}
+  label{display:block;margin:17px 0 7px;font-size:13px;font-weight:800}
+  input[type="number"],input[type="text"]{
+    width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 13px;outline:none
+  }
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,74,255,.12)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .summary-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.09)}
+  .summary-row:last-child{border-bottom:none}
+  .account-card{border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:14px}
+  .headline-money{display:flex;justify-content:space-between;align-items:end;gap:18px}
+  .headline-money .big{font-size:44px;font-weight:900;letter-spacing:-.045em}
+  .safe{color:var(--good)}
+  .bar{height:10px;background:#edf0f5;border-radius:99px;overflow:hidden;margin:13px 0 6px}
+  .bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .pay-list{margin-top:16px}
+  .pay-item{
+    display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+    padding:12px 0;border-bottom:1px solid var(--line)
+  }
+  .pay-item:last-child{border-bottom:none}
+  .pay-item button{border:none;border-radius:10px;padding:8px 10px;font-weight:800;cursor:pointer}
+  .pay-now{background:#11131a;color:white}
+  .paid-btn{background:var(--goodSoft);color:var(--good)}
+  .danger{color:var(--danger)}
+  .ai{
+    margin-top:15px;background:#f4f1ff;border:1px solid #e3dcff;border-radius:17px;padding:16px;line-height:1.5
+  }
+  .ai small{font-weight:900;color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .report{border:1px solid var(--line);border-radius:18px;padding:18px}
+  .report h4{margin:0 0 10px;font-size:18px}
+  .report ul{margin:0;padding-left:18px;line-height:1.65;color:#555b6b}
+  .notification{
+    margin-top:11px;padding:13px;border-radius:14px;background:#f7f8fb;border:1px solid var(--line)
+  }
+  .quote{
+    background:#11141f;color:white;border-radius:28px;padding:44px;
+    display:grid;grid-template-columns:1.08fr .92fr;gap:34px;align-items:center
+  }
+  .quote h2{font-size:clamp(36px,5vw,58px);line-height:1.02;letter-spacing:-.045em;margin:0}
+  .quote p{color:#c3cad8;font-size:18px;line-height:1.6}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .chip{background:#262a3a;border:1px solid #353a4e;padding:8px 10px;border-radius:999px;font-size:13px;color:#e1e5ef}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .compare-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px}
+  .compare-card h3{margin-top:0}
+  .compare-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .compare-row:last-child{border-bottom:none}
+  .final{text-align:center;padding:95px 0 110px}
+  .final h2{font-size:clamp(44px,6vw,72px);letter-spacing:-.05em;line-height:1;margin:0 auto 18px;max-width:850px}
+  .final p{font-size:18px;color:var(--muted);max-width:650px;margin:0 auto 28px}
+  footer{display:flex;justify-content:space-between;gap:20px;padding:28px 0 42px;color:var(--muted);font-size:13px}
+  @media(max-width:920px){
+    .hero,.demo-shell,.quote,.compare{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr 1fr}
+    .phone{max-width:560px;margin:auto;width:100%}
+  }
+  @media(max-width:620px){
+    .navlinks a{display:none}
+    .stats,.steps,.grid2,.row2{grid-template-columns:1fr}
+    .hero{padding-top:40px}
+    h1{font-size:50px}
+    .quote{padding:28px}
+    .pay-item{grid-template-columns:1fr auto}
+    .pay-item button{grid-column:1/-1}
+  }
+
+  /* ---- account switcher ---- */
+  .acct-switch{
+    display:flex;gap:6px;background:#f1f1f6;border-radius:999px;padding:4px;margin-bottom:16px;width:fit-content
+  }
+  .acct-switch button{
+    border:none;background:transparent;border-radius:999px;padding:8px 14px;font-weight:800;font-size:13px;cursor:pointer;color:#6a6f7d
+  }
+  .acct-switch button.active{background:#11131a;color:#fff}
+  .acct-note{font-size:12px;color:var(--muted);margin:-8px 0 14px}
+
+  /* ---- sponsored BNPL ad ---- */
+  .sponsored-ad{
+    margin-top:14px;border-radius:17px;padding:15px;
+    background:linear-gradient(135deg,#fff7e6,#fff1cf);border:1px solid #f2dfa0;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;
+    position:relative;overflow:hidden
+  }
+  .sponsored-ad:hover{filter:brightness(0.98)}
+  .sponsored-tag{
+    position:absolute;top:8px;right:10px;font-size:10px;font-weight:900;letter-spacing:.04em;
+    color:#9a6700;background:#fff;padding:3px 7px;border-radius:999px;border:1px solid #f2dfa0
+  }
+  .ad-left{display:flex;gap:12px;align-items:center}
+  .ad-icon{width:42px;height:42px;border-radius:12px;background:#ffe8a3;display:grid;place-items:center;font-size:20px}
+  .ad-title{font-weight:900;font-size:14px}
+  .ad-sub{font-size:12.5px;color:#7a5f13;margin-top:2px}
+  .ad-cta{
+    background:#11131a;color:#fff;border:none;border-radius:999px;padding:9px 14px;font-weight:800;font-size:12.5px;
+    white-space:nowrap
+  }
+
+  /* ---- warning modal ---- */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(10,11,18,.6);z-index:50;
+    align-items:center;justify-content:center;padding:20px
+  }
+  .modal-overlay.open{display:flex}
+  .modal{
+    background:#fff;border-radius:24px;max-width:480px;width:100%;max-height:86vh;
+    display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.35)
+  }
+  .modal-head{padding:22px 24px 14px;border-bottom:1px solid var(--line)}
+  .modal-head .flag{
+    display:inline-flex;align-items:center;gap:6px;background:var(--dangerSoft);color:var(--danger);
+    font-weight:900;font-size:12px;padding:6px 10px;border-radius:999px;margin-bottom:10px
+  }
+  .modal-head h3{margin:0 0 4px;font-size:21px;letter-spacing:-.02em}
+  .modal-head p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .modal-body{
+    padding:18px 24px;overflow-y:auto;line-height:1.65;font-size:14.5px;color:#33384a;flex:1
+  }
+  .modal-body h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px}
+  .modal-body h4:first-child{margin-top:0}
+  .modal-body .line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .modal-body .line:last-child{border-bottom:none}
+  .modal-body .warn-box{
+    background:var(--dangerSoft);border:1px solid #ffd4cf;border-radius:14px;padding:14px;margin-top:14px;color:#7a231a
+  }
+  .modal-foot{padding:16px 24px 22px;border-top:1px solid var(--line)}
+  .scroll-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px;transition:opacity .2s}
+  .scroll-hint.hidden{opacity:0}
+  .modal-foot .btn{width:100%}
+  .modal-foot .btn[disabled]{background:#d8dae1;color:#9096a3;cursor:not-allowed}
+  .modal-foot .btn-cancel{background:transparent;color:var(--muted);margin-top:8px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="brand"><div class="logo">18</div> 18 Before 18</div>
+    <div class="navlinks">
+      <a href="#how">How it works</a>
+      <a href="#demo">Demo</a>
+      <a href="#parents">For parents</a>
+      <a class="btn primary" href="#demo">Start Life Mode</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">💸 Real money. Safe consequences. Better judgement.</div>
+        <h1>Practice adulthood before adulthood gets expensive.</h1>
+        <p>Parents deposit real weekly money, set real-life obligations like rent, groceries and power, and let their teenager manage what’s left. If they spend too much, the consequence carries into the next payday — just like real life.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#demo">Try the live demo</a>
+          <a class="btn secondary" href="#how">See the system</a>
+        </div>
+        <div class="micro">The goal isn’t to stop bad purchases. It’s to build adults who understand obligations before spending.</div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-inner">
+          <div class="toprow">
+            <div><strong>Life Mode</strong><div class="sub">Week 7 • Age 16</div></div>
+            <div class="avatar">🧑‍🚀</div>
+          </div>
+
+          <div class="balance">
+            <div class="label">Real account balance</div>
+            <div class="amount">$200</div>
+            <div class="money-row"><span>Committed to bills</span><strong>$85</strong></div>
+            <div class="money-row"><span>Savings target</span><strong>$30</strong></div>
+            <div class="money-row"><span>Actually safe to spend</span><strong>$85</strong></div>
+          </div>
+
+          <div class="bill">
+            <div class="bill-left"><div class="icon">🏠</div><div><strong>Rent</strong><small>Due Sunday • $40</small></div></div>
+            <span class="status due">Due</span>
+          </div>
+          <div class="bill">
+            <div class="bill-left"><div class="icon">🛒</div><div><strong>Groceries</strong><small>Your share • $25</small></div></div>
+            <span class="status paid">Paid</span>
+          </div>
+          <div class="bill">
+            <div class="bill-left"><div class="icon">⚡</div><div><strong>Power</strong><small>Your share • $10</small></div></div>
+            <span class="status due">Due</span>
+          </div>
+
+          <div class="ai">
+            <small>AI COACH</small><br/>
+            You have $200 in your account, but only <b>$85 is actually free to spend</b>. Rent and power are still due this week.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="stats">
+      <div class="stat"><div class="num">85%</div><p>of surveyed parents said they should have more conversations about good money habits.</p></div>
+      <div class="stat"><div class="num">65%</div><p>found it difficult to step back and let their child make their own money mistakes.</p></div>
+      <div class="stat"><div class="num">51%</div><p>struggled to explain money in a way their child could understand.</p></div>
+    </div>
+
+    <section id="how">
+      <div class="section-head">
+        <h2>A real-money training ground for adulthood.</h2>
+        <p>The parent creates a simplified version of adult life. The teen gets real money, real obligations and real consequences — without credit-card debt, late fees or financial disaster.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="n">1</div>
+          <h3>Parent sets the world</h3>
+          <p>Deposit $200 a week. Add rent, groceries, power, gas, phone or any custom household contribution.</p>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <h3>Teen pays their life</h3>
+          <p>Bills become weekly or monthly tasks. The teenager chooses when to pay them from their real balance.</p>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <h3>Mistakes have consequences</h3>
+          <p>If they spend the rent money, the unpaid amount rolls forward and comes out of the next allowance.</p>
+        </div>
+        <div class="step">
+          <div class="n">4</div>
+          <h3>AI turns behaviour into judgement</h3>
+          <p>Teen gets context. Parent gets one useful conversation. Both see progress without turning the app into surveillance.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="section-head">
+        <h2>See a week play out.</h2>
+        <p>Configure the teen’s weekly life, pay bills in any order, and see how the system carries unpaid obligations into the next payday.</p>
+      </div>
+
+      <div class="acct-switch">
+        <button class="active" id="viewParentBtn" type="button">👪 Parent account</button>
+        <button id="viewTeenBtn" type="button">🧑‍🚀 Teen account</button>
+      </div>
+      <div class="acct-note">18 Before 18 runs as two separate logins — this toggle just previews both sides in one demo.</div>
+
+      <div class="demo-shell">
+        <div class="panel dark">
+          <span class="badge">PARENT SETUP</span>
+          <h3 style="margin-top:16px">Create the financial rules</h3>
+          <div class="sub">These can represent real household contributions or training amounts agreed inside the family.</div>
+
+          <label for="income">Weekly deposit</label>
+          <input id="income" type="number" value="200" min="20" max="2000">
+
+          <div class="row2">
+            <div><label for="rent">Rent</label><input id="rent" type="number" value="40" min="0" max="500"></div>
+            <div><label for="groceries">Groceries</label><input id="groceries" type="number" value="25" min="0" max="500"></div>
+          </div>
+          <div class="row2">
+            <div><label for="power">Power</label><input id="power" type="number" value="10" min="0" max="500"></div>
+            <div><label for="gas">Gas / transport</label><input id="gas" type="number" value="10" min="0" max="500"></div>
+          </div>
+
+          <label for="save">Savings target</label>
+          <input id="save" type="number" value="30" min="0" max="500">
+
+          <div style="margin-top:20px">
+            <div class="summary-row"><span>Weekly deposit</span><strong id="sumIncome">$200</strong></div>
+            <div class="summary-row"><span>Weekly obligations</span><strong id="sumBills">$85</strong></div>
+            <div class="summary-row"><span>Savings target</span><strong id="sumSave">$30</strong></div>
+            <div class="summary-row"><span>Safe to spend</span><strong id="sumFree">$85</strong></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="badge" style="background:#eeeaff;color:#6d4aff">TEEN DASHBOARD</span>
+          <h3 style="margin-top:16px">This week</h3>
+          <div class="sub">Your bank balance is real. Your obligations are part of the agreement with your parent.</div>
+
+          <div class="account-card">
+            <div class="headline-money">
+              <div>
+                <div class="sub">Bank balance</div>
+                <div class="big" id="bankBalance">$200</div>
+              </div>
+              <div style="text-align:right">
+                <div class="sub">Safe to spend</div>
+                <div class="big safe" id="safeSpend">$85</div>
+              </div>
+            </div>
+            <div class="bar"><span id="safeBar" style="width:43%"></span></div>
+            <div class="sub" id="carryMsg">No debt carried from last week.</div>
+
+            <div class="pay-list" id="billList"></div>
+
+            <div class="ai" id="teenAI">
+              <small>AI COACH</small><br/>
+              You have $200 in your account, but $85 is committed to bills and $30 is your savings target. That leaves $85 genuinely free.
+            </div>
+
+            <div class="sponsored-ad" id="bnplAd">
+              <span class="sponsored-tag">Sponsored</span>
+              <div class="ad-left">
+                <div class="ad-icon">🛍️</div>
+                <div>
+                  <div class="ad-title">Get those sneakers today</div>
+                  <div class="ad-sub">Pay in 4 — 0%* interest, no credit check</div>
+                </div>
+              </div>
+              <button class="ad-cta" type="button">Shop now</button>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="report">
+              <h4>Weekly teen report</h4>
+              <ul id="teenReport">
+                <li>All bills still open.</li>
+                <li>Savings target: $30.</li>
+                <li>Safe-to-spend: $85.</li>
+              </ul>
+            </div>
+            <div class="report">
+              <h4>Parent AI briefing</h4>
+              <div id="parentBrief" class="sub">No intervention yet. Let them manage the week.</div>
+              <div class="notification" id="parentPrompt"><strong>Conversation prompt</strong><br><span class="sub">“What do you want to make sure is covered before you start spending this week?”</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+            <button class="btn primary" id="spendBtn">Simulate $90 fun spend</button>
+            <button class="btn secondary" id="nextWeekBtn">Next payday</button>
+            <button class="btn secondary" id="resetBtn">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="parents">
+      <div class="quote">
+        <div>
+          <h2>Your balance tells you how much money you have. We teach you how much of it is actually yours to spend.</h2>
+        </div>
+        <div>
+          <p>18 Before 18 is not a parental-control app. It is a handover system: parents create responsibility, teenagers practise managing it, and AI helps both sides learn from what actually happened.</p>
+          <div class="chips">
+            <span class="chip">Real balance</span>
+            <span class="chip">Custom family bills</span>
+            <span class="chip">Debt carry-over</span>
+            <span class="chip">Savings targets</span>
+            <span class="chip">AI weekly reports</span>
+            <span class="chip">Parent conversation prompts</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Not a budgeting app. A responsibility engine.</h2>
+        <p>The product teaches a sequence most adults only learn after leaving home.</p>
+      </div>
+      <div class="compare">
+        <div class="compare-card">
+          <h3>Typical teen banking</h3>
+          <div class="compare-row">👁️ <span>Parent sees transactions</span></div>
+          <div class="compare-row">🚫 <span>Parent blocks categories</span></div>
+          <div class="compare-row">💳 <span>Teen gets a card</span></div>
+          <div class="compare-row">📚 <span>Generic financial education</span></div>
+        </div>
+        <div class="compare-card">
+          <h3>18 Before 18</h3>
+          <div class="compare-row">🏠 <span>Teen has obligations before discretionary spend</span></div>
+          <div class="compare-row">↪️ <span>Missed bills carry into the next payday</span></div>
+          <div class="compare-row">🎯 <span>Saving competes with real spending decisions</span></div>
+          <div class="compare-row">🧠 <span>AI interprets behaviour and guides the next conversation</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>The AI layer is where the learning compounds.</h2>
+        <p>The AI isn’t there to say “spending bad”. It observes patterns and turns them into useful feedback.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">AI</div><h3>For the teen</h3><p>“You paid every bill, but 70% of fun spending happened in the first two days. Next week, try pacing it.”</p></div>
+        <div class="step"><div class="n">👪</div><h3>For the parent</h3><p>“They missed groceries twice after spending early. Ask how they would protect that money next payday.”</p></div>
+        <div class="step"><div class="n">✓</div><h3>Positive reinforcement</h3><p>“Four weeks hitting the saving goal. Consider giving them responsibility for another bill.”</p></div>
+        <div class="step"><div class="n">↗</div><h3>Graduated independence</h3><p>As judgement improves, parental control reduces. Success means the system becomes less necessary.</p></div>
+      </div>
+    </section>
+
+    <section class="final">
+      <h2>Let them learn to run out of money before running out of money becomes serious.</h2>
+      <p>Real decisions. Real responsibility. Safe consequences. A financial training ground for the years before adulthood.</p>
+      <a class="btn primary" href="#demo">Try Life Mode</a>
+    </section>
+  </main>
+
+  <footer>
+    <span>18 Before 18 • AI Hackathon concept</span>
+    <span>Prototype experience only — bank connectivity and money movement are simulated here.</span>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="bnplModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="flag">⚠ Before you continue</span>
+      <h3>This is a loan, not a discount.</h3>
+      <p>You're about to leave 18 Before 18 for an outside "Pay in 4" checkout. Read the whole thing below — the Continue button unlocks once you've scrolled to the end.</p>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <h4>What "Pay in 4" actually means</h4>
+      <div class="line"><span>Item price</span><strong>$120.00</strong></div>
+      <div class="line"><span>Due today</span><strong>$30.00</strong></div>
+      <div class="line"><span>Due in 2 weeks</span><strong>$30.00</strong></div>
+      <div class="line"><span>Due in 4 weeks</span><strong>$30.00</strong></div>
+      <div class="line"><span>Due in 6 weeks</span><strong>$30.00</strong></div>
+
+      <h4>What happens if a payment is missed</h4>
+      <p>A late fee is usually added, and it can be reported to a credit file that follows you into adulthood. Missing more than one payment on a "0% interest" plan is one of the most common ways short-term debt turns into long-term debt.</p>
+
+      <h4>What this really is</h4>
+      <p>It is not a discount. It is not free money. It is a loan, split into four pieces, from a company whose entire business model depends on you agreeing to owe money you don't currently have.</p>
+
+      <h4>Ask before you tap Continue</h4>
+      <p>Do you have all $120 available right now, without touching bill money or savings? If the honest answer is no, this purchase is being financed — by you, for a fee, four payments from now.</p>
+
+      <div class="warn-box">
+        <strong>1 in 4 teens</strong> who use "buy now, pay later" style checkouts miss at least one payment in their first year. This warning exists so that doesn't become you.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div class="scroll-hint" id="scrollHint">↓ Scroll to read the rest before continuing</div>
+      <button class="btn primary" id="modalContinue" disabled>I understand — continue to checkout</button>
+      <button class="btn btn-cancel" id="modalCancel" type="button">Never mind, go back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const inputIds = ['income','rent','groceries','power','gas','save'];
+  const state = {
+    balance: 200,
+    carryDebt: 0,
+    paid: {rent:false, groceries:false, power:false, gas:false},
+    funSpend: 0
+  };
+
+  const labels = {
+    rent:['🏠','Rent'],
+    groceries:['🛒','Groceries'],
+    power:['⚡','Power'],
+    gas:['⛽','Gas / transport']
+  };
+
+  function v(id){ return Math.max(0, Number($(id).value) || 0); }
+  function money(n){
+    const val = Math.round(n);
+    return val < 0 ? '-$' + Math.abs(val) : '$' + val;
+  }
+  function obligations(){
+    return {
+      rent:v('rent'),
+      groceries:v('groceries'),
+      power:v('power'),
+      gas:v('gas')
+    };
+  }
+  function totalBills(){
+    return Object.values(obligations()).reduce((a,b)=>a+b,0);
+  }
+  function unpaidTotal(){
+    const obs = obligations();
+    return Object.keys(obs).reduce((sum,k)=>sum+(state.paid[k]?0:obs[k]),0);
+  }
+  function safeToSpend(){
+    return state.balance - unpaidTotal() - v('save');
+  }
+
+  function renderBills(){
+    const obs = obligations();
+    $('billList').innerHTML = Object.keys(obs).map(k=>{
+      const paid = state.paid[k];
+      return `<div class="pay-item">
+        <div><strong>${labels[k][0]} ${labels[k][1]}</strong><div class="sub">${paid?'Completed':'Due this week'}</div></div>
+        <strong>${money(obs[k])}</strong>
+        <button class="${paid?'paid-btn':'pay-now'}" data-key="${k}" ${paid?'disabled':''}>${paid?'Paid':'Pay now'}</button>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('.pay-now').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const k=btn.dataset.key;
+        const amount=obligations()[k];
+        if(state.balance >= amount){
+          state.balance -= amount;
+          state.paid[k] = true;
+          render();
+        }else{
+          $('teenAI').innerHTML = `<small>AI COACH</small><br/><b>You can’t cover ${labels[k][1]} yet.</b> You’re short ${money(amount-state.balance)}. If it remains unpaid, it will carry into your next payday.`;
+        }
+      });
+    });
+  }
+
+  function parentInsights(){
+    const unpaid = unpaidTotal();
+    const safe = safeToSpend();
+
+    if(unpaid > 0 && state.funSpend > 0 && state.balance < unpaid){
+      $('parentBrief').innerHTML = `<b>Worth discussing:</b> fun spending happened before obligations, and ${money(unpaid)} is still unpaid.`;
+      $('parentPrompt').innerHTML = `<strong>Conversation prompt</strong><br><span class="sub">“You knew these bills were coming. What could you do differently next payday so that money is protected first?”</span>`;
+    } else if(unpaid === 0){
+      $('parentBrief').innerHTML = `<b>Positive signal:</b> every obligation is covered this week.`;
+      $('parentPrompt').innerHTML = `<strong>Conversation prompt</strong><br><span class="sub">“You handled everything you needed to. What helped you stay on top of it?”</span>`;
+    } else {
+      $('parentBrief').innerHTML = `No intervention yet. Let them manage the week.`;
+      $('parentPrompt').innerHTML = `<strong>Conversation prompt</strong><br><span class="sub">“What do you want to make sure is covered before you start spending this week?”</span>`;
+    }
+  }
+
+  function teenInsights(){
+    const unpaid = unpaidTotal();
+    const safe = safeToSpend();
+    const paidCount = Object.values(state.paid).filter(Boolean).length;
+
+    $('teenReport').innerHTML = `
+      <li>${paidCount}/4 bills completed.</li>
+      <li>${money(unpaid)} still committed to bills.</li>
+      <li>Savings target: ${money(v('save'))}.</li>
+      <li>Fun spending this week: ${money(state.funSpend)}.</li>
+    `;
+
+    if(safe < 0){
+      $('teenAI').innerHTML = `<small>AI COACH</small><br/>Your account still has ${money(state.balance)}, but you’re effectively <b class="danger">${money(safe)}</b> after unpaid bills and savings. Your balance is not the same as your spendable money.`;
+    } else if(unpaid === 0){
+      $('teenAI').innerHTML = `<small>AI COACH</small><br/>All obligations are covered. You now have <b>${money(state.balance)}</b> in the account and ${money(Math.max(0,state.balance-v('save')))} available after your savings target.`;
+    } else {
+      $('teenAI').innerHTML = `<small>AI COACH</small><br/>You have ${money(state.balance)} in the account, but ${money(unpaid)} is still committed to bills and ${money(v('save'))} is your savings target. That leaves <b>${money(Math.max(0,safe))}</b> genuinely free.`;
+    }
+  }
+
+  function render(){
+    const income = v('income');
+    const bills = totalBills();
+    const free = income - bills - v('save');
+
+    $('sumIncome').textContent = money(income);
+    $('sumBills').textContent = money(bills);
+    $('sumSave').textContent = money(v('save'));
+    $('sumFree').textContent = money(free);
+
+    $('bankBalance').textContent = money(state.balance);
+    $('safeSpend').textContent = money(Math.max(0,safeToSpend()));
+    $('carryMsg').textContent = state.carryDebt > 0
+      ? `${money(state.carryDebt)} was automatically deducted from this payday for last week's unpaid obligations.`
+      : 'No debt carried from last week.';
+
+    const pct = Math.max(4, Math.min(100, Math.max(0,safeToSpend()) / Math.max(1,state.balance) * 100));
+    $('safeBar').style.width = pct + '%';
+
+    renderBills();
+    teenInsights();
+    parentInsights();
+  }
+
+  inputIds.forEach(id=>{
+    $(id).addEventListener('input',()=>{
+      state.balance = v('income');
+      state.carryDebt = 0;
+      state.paid = {rent:false, groceries:false, power:false, gas:false};
+      state.funSpend = 0;
+      render();
+    });
+  });
+
+  $('spendBtn').addEventListener('click',()=>{
+    const amount = 90;
+    if(state.balance >= amount){
+      state.balance -= amount;
+      state.funSpend += amount;
+      render();
+    }
+  });
+
+  $('nextWeekBtn').addEventListener('click',()=>{
+    const unpaid = unpaidTotal();
+    state.carryDebt = unpaid;
+    state.balance = Math.max(0, v('income') - unpaid);
+    state.paid = {rent:false, groceries:false, power:false, gas:false};
+    state.funSpend = 0;
+    render();
+    if(unpaid > 0){
+      $('teenAI').innerHTML = `<small>NEXT PAYDAY</small><br/>Your ${money(v('income'))} deposit arrived, but ${money(unpaid)} from last week’s unpaid obligations was deducted first. New starting balance: <b>${money(state.balance)}</b>.`;
+      $('parentBrief').innerHTML = `<b>Learning event:</b> unpaid obligations reduced the next payday by ${money(unpaid)}.`;
+    }
+  });
+
+  $('resetBtn').addEventListener('click',()=>{
+    state.balance = v('income');
+    state.carryDebt = 0;
+    state.paid = {rent:false, groceries:false, power:false, gas:false};
+    state.funSpend = 0;
+    render();
+  });
+
+  render();
+
+  /* ---- BNPL sponsored ad -> scroll-gated warning modal ---- */
+  const bnplAd = $('bnplAd');
+  const bnplModal = $('bnplModal');
+  const modalBody = $('modalBody');
+  const modalContinue = $('modalContinue');
+  const modalCancel = $('modalCancel');
+  const scrollHint = $('scrollHint');
+
+  function openModal(){
+    bnplModal.classList.add('open');
+    modalContinue.disabled = true;
+    scrollHint.classList.remove('hidden');
+    modalBody.scrollTop = 0;
+  }
+  function closeModal(){
+    bnplModal.classList.remove('open');
+  }
+
+  bnplAd.addEventListener('click', openModal);
+
+  modalBody.addEventListener('scroll', ()=>{
+    const atBottom = modalBody.scrollTop + modalBody.clientHeight >= modalBody.scrollHeight - 6;
+    if(atBottom){
+      modalContinue.disabled = false;
+      scrollHint.classList.add('hidden');
+    }
+  });
+
+  modalContinue.addEventListener('click', ()=>{
+    if(modalContinue.disabled) return;
+    closeModal();
+    $('teenAI').innerHTML = `<small>AI COACH</small><br/>You read the full warning before continuing to a "Pay in 4" checkout. That pause is the whole point — most people never see this screen before they owe money.`;
+  });
+  modalCancel.addEventListener('click', closeModal);
+  bnplModal.addEventListener('click', (e)=>{ if(e.target === bnplModal) closeModal(); });
+
+  /* ---- parent / teen account switcher (demo preview only) ---- */
+  const viewParentBtn = $('viewParentBtn');
+  const viewTeenBtn = $('viewTeenBtn');
+  const parentPanel = document.querySelector('.demo-shell .panel.dark');
+  const teenPanel = document.querySelector('.demo-shell .panel:not(.dark)');
+
+  function showParentView(){
+    viewParentBtn.classList.add('active');
+    viewTeenBtn.classList.remove('active');
+    parentPanel.style.order = 0;
+    teenPanel.style.order = 1;
+    parentPanel.style.opacity = 1;
+    teenPanel.style.opacity = .55;
+  }
+  function showTeenView(){
+    viewTeenBtn.classList.add('active');
+    viewParentBtn.classList.remove('active');
+    teenPanel.style.order = 0;
+    parentPanel.style.order = 1;
+    teenPanel.style.opacity = 1;
+    parentPanel.style.opacity = .55;
+  }
+  viewParentBtn.addEventListener('click', showParentView);
+  viewTeenBtn.addEventListener('click', showTeenView);
+</script>
+</body>
+</html>
