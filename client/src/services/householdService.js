@@ -10,8 +10,18 @@ export async function updateHousehold(payload) {
   return data;
 }
 
-export async function getBills() {
-  const { data } = await api.get('/bills');
+export async function updateIndependenceLevel(teenId, level) {
+  const { data } = await api.patch(`/household/teens/${teenId}/independence-level`, { level });
+  return data;
+}
+
+export async function getBills(teenId) {
+  const { data } = await api.get('/bills', { params: teenId ? { teenId } : undefined });
+  return data;
+}
+
+export async function getBillDefinitions() {
+  const { data } = await api.get('/bills/definitions');
   return data;
 }
 
@@ -40,8 +50,23 @@ export async function simulatePurchase(payload) {
   return data;
 }
 
+export async function getBNPLPlans() {
+  const { data } = await api.get('/simulate/bnpl');
+  return data;
+}
+
 export async function requestBNPLPlan(payload) {
   const { data } = await api.post('/simulate/bnpl', payload);
+  return data;
+}
+
+export async function approveBNPLPlan(planId) {
+  const { data } = await api.patch(`/simulate/bnpl/${planId}/approve`);
+  return data;
+}
+
+export async function declineBNPLPlan(planId) {
+  const { data } = await api.patch(`/simulate/bnpl/${planId}/decline`);
   return data;
 }
 

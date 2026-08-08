@@ -12,7 +12,8 @@ export function LandingPage() {
         <div className="brand">18 Before 18</div>
         <div className="navlinks">
           <a href="#how">How it works</a>
-          <Link className="btn primary" to="/login">Log in</Link>
+          <Link className="btn secondary" to="/login">Log in</Link>
+          <Link className="btn primary" to="/onboarding">Sign up</Link>
         </div>
       </nav>
       <main>

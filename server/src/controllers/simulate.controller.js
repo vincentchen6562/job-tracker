@@ -47,3 +47,30 @@ export async function approveBNPLPlan(req, res, next) {
     next(err);
   }
 }
+
+// PATCH /api/simulate/bnpl/:id/decline
+export async function declineBNPLPlan(req, res, next) {
+  try {
+    const plan = await BNPLPlan.findOneAndUpdate(
+      { _id: req.params.id, household: req.user.household },
+      { $set: { status: 'declined' } },
+      { new: true }
+    );
+    if (!plan) return res.status(404).json({ message: 'Plan not found' });
+    res.json(plan);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/simulate/bnpl — plans for the household (parent review queue)
+export async function listBNPLPlans(req, res, next) {
+  try {
+    const filter = { household: req.user.household };
+    if (req.user.role === 'teen') filter.user = req.user.id;
+    const plans = await BNPLPlan.find(filter).sort({ createdAt: -1 });
+    res.json(plans);
+  } catch (err) {
+    next(err);
+  }
+}

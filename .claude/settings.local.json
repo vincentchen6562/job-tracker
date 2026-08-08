@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(PORT=5050 node server.js)",
+      "Bash(echo \"started with pid $!\")",
+      "Bash(curl *)",
+      "Bash(node *)"
     ]
   }
 }

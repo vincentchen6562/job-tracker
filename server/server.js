@@ -2,10 +2,12 @@ import app from './src/app.js';
 import { connectDB } from './src/config/db.js';
 import { env } from './src/config/env.js';
 import { schedulePaydayJob } from './src/jobs/paydayJob.js';
+import { scheduleWeeklyReportJob } from './src/jobs/weeklyReportJob.js';
 
 async function start() {
   await connectDB();
   schedulePaydayJob();
+  scheduleWeeklyReportJob();
   app.listen(env.port, () => {
     console.log(`18 Before 18 API listening on port ${env.port}`);
   });

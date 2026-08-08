@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export function Login() {
@@ -33,6 +33,9 @@ export function Login() {
           Log in
         </button>
       </form>
+      <p className="sub" style={{ marginTop: 16 }}>
+        New family? <Link to="/onboarding">Create a household</Link>
+      </p>
     </div>
   );
 }
