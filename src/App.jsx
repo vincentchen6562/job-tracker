@@ -46,10 +46,11 @@ export default function App() {
   const [sort, setSort] = useState({ key: 'date', direction: 'asc' });
   const [theme, setTheme] = useState(() => loadTheme() ?? 'light');
   const [message, setMessage] = useState('');
+  const [saveFailed, setSaveFailed] = useState(false);
   const cardRefs = useRef({});
 
   useEffect(() => {
-    saveApplications(applications);
+    setSaveFailed(!saveApplications(applications));
   }, [applications]);
 
   useEffect(() => {
@@ -188,6 +189,18 @@ export default function App() {
           {theme === 'dark' ? '☀' : '☾'}
         </button>
       </header>
+
+      {saveFailed && (
+        <div className="flash flash--warn" role="alert">
+          <span>
+            Couldn't save to this browser — recent edits exist only on this page
+            and will be lost if you close it. Download a backup now.
+          </span>
+          <button type="button" className="btn" onClick={exportJson}>
+            Download backup
+          </button>
+        </div>
+      )}
 
       {route.name !== 'detail' && (
         <Toolbar
