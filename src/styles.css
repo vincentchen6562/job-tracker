@@ -10,6 +10,7 @@
   --accent-soft: #e6eef6;
   --gold: #b07d1f;
   --danger: #a8362c;
+  --danger-soft: #f7e6e3;
 
   --status-not-started: #8b8f96;
   --status-in-progress: #b07d1f;
@@ -38,6 +39,7 @@
   --accent-soft: #1f2a38;
   --gold: #d9a94e;
   --danger: #e0776b;
+  --danger-soft: #33211f;
 
   --status-not-started: #8b8f96;
   --status-in-progress: #d9a94e;
@@ -209,6 +211,17 @@ textarea:focus-visible {
   background: var(--accent-soft);
   border-radius: 0 var(--radius) var(--radius) 0;
   font-size: 13px;
+}
+
+/* Persistent — a failed save means the only copy is the open page. */
+.flash--warn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
 }
 
 /* Table ------------------------------------------------------------- */
