@@ -167,18 +167,25 @@ export function deriveLocations(app) {
   return found.length ? found : [UNSPECIFIED];
 }
 
-// Explicit values win; an empty string means "let the text decide".
+// A role can span several cities, so locations are stored as a list. Older
+// records held a single string under `location` — still read those.
+export function explicitLocations(app) {
+  if (Array.isArray(app.locations)) return app.locations.filter(Boolean);
+  return app.location ? [app.location] : [];
+}
+
+// Explicit values win; an empty value means "let the text decide".
 export function resolveFacets(app) {
   const category = app.category || deriveCategory(app);
   const roleType = app.roleType || deriveRoleType(app);
-  const locations = app.location ? [app.location] : deriveLocations(app);
+  const chosen = explicitLocations(app);
 
   return {
     category,
     roleType,
-    locations,
+    locations: chosen.length ? chosen : deriveLocations(app),
     categoryIsAuto: !app.category,
     roleTypeIsAuto: !app.roleType,
-    locationIsAuto: !app.location,
+    locationIsAuto: chosen.length === 0,
   };
 }

@@ -153,7 +153,7 @@ body {
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn:hover {
@@ -183,8 +183,17 @@ textarea:focus-visible {
   color: #10141a;
 }
 
+:root[data-theme='dark'] .btn--primary:hover {
+  color: var(--accent);
+}
+
+/* .btn:hover is more specific than .btn--primary, so it repaints the
+   background pale and the white label disappears. Take the whole hover
+   state over: pale accent panel, accent text. */
 .btn--primary:hover {
-  filter: brightness(1.08);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn--quiet {
@@ -824,6 +833,81 @@ textarea:focus-visible {
   flex: 1 1 210px;
 }
 
+.meta-field--tags {
+  flex: 1 1 260px;
+}
+
+/* Tag input ---------------------------------------------------------- */
+
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-height: 33px;
+  padding: 4px 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: text;
+}
+
+.tag-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Grows to fill the row, but stays usable once tags have eaten the space. */
+.tag-input__field {
+  flex: 1 1 90px;
+  min-width: 80px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  padding: 2px 2px;
+}
+
+.tag-input__field:focus {
+  outline: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 1px 4px 1px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.tag__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 9px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.tag__remove:hover {
+  background: var(--accent);
+  color: var(--surface);
+  opacity: 1;
+}
+
 .meta-field--full {
   display: flex;
   flex-direction: column;
@@ -831,7 +915,8 @@ textarea:focus-visible {
   margin-top: 12px;
 }
 
-.meta-field span {
+/* Direct child only — the field's label, not tags rendered inside it. */
+.meta-field > span {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.12em;
