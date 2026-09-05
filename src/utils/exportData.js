@@ -2,6 +2,8 @@
 // original notes document: a summary table on top, then one section per
 // application.
 
+import { resolveFacets, UNSPECIFIED } from '../data/taxonomy';
+
 function slug(text) {
   return String(text)
     .toLowerCase()
@@ -42,11 +44,16 @@ export function toMarkdown(applications) {
     lines.push('');
     lines.push(`## ${app.company || 'Untitled'}`);
     lines.push('');
+    const facets = resolveFacets(app);
+    const locations = facets.locations.filter((l) => l !== UNSPECIFIED).join(', ');
     const meta = [
       app.role ? `**Role:** ${app.role}` : null,
       app.status ? `**Status:** ${app.status}` : null,
       app.priority ? `**Priority:** ${stars(app.priority)}` : null,
       app.date ? `**Date:** ${app.date}` : null,
+      facets.category !== UNSPECIFIED ? `**Category:** ${facets.category}` : null,
+      facets.roleType !== UNSPECIFIED ? `**Role type:** ${facets.roleType}` : null,
+      locations ? `**Location:** ${locations}` : null,
       app.jobPostingUrl ? `**Posting:** ${app.jobPostingUrl}` : null,
     ].filter(Boolean);
     if (meta.length) {

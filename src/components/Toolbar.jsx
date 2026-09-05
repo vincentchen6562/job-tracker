@@ -6,7 +6,6 @@ export default function Toolbar({
   onExportJson,
   onImportJson,
   onReset,
-  count,
 }) {
   const fileInput = useRef(null);
 
@@ -26,9 +25,6 @@ export default function Toolbar({
         <button type="button" className="btn btn--primary" onClick={onAdd}>
           Add application
         </button>
-        <span className="toolbar__count">
-          {count} {count === 1 ? 'application' : 'applications'}
-        </span>
       </div>
 
       <div className="toolbar__group">

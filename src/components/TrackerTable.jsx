@@ -21,6 +21,7 @@ export default function TrackerTable({
   onSortChange,
   onUpdate,
   onRemove,
+  emptyMessage = 'No applications yet. Use “Add application” to start one.',
 }) {
   function handleSort(key) {
     if (sort.key === key) {
@@ -61,7 +62,7 @@ export default function TrackerTable({
           {applications.length === 0 && (
             <tr>
               <td colSpan={COLUMNS.length + 1} className="empty-row">
-                No applications yet. Use “Add application” to start one.
+                {emptyMessage}
               </td>
             </tr>
           )}
