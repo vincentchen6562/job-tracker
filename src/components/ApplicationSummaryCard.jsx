@@ -1,3 +1,5 @@
+import { UNSPECIFIED } from '../data/taxonomy';
+
 function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
 }
@@ -15,8 +17,19 @@ function StaticStars({ value = 0 }) {
   );
 }
 
-export default function ApplicationSummaryCard({ app, onRemove, registerRef }) {
+export default function ApplicationSummaryCard({ app, facets, onRemove, registerRef }) {
   const href = `#/app/${encodeURIComponent(app.id)}`;
+  const chips = facets
+    ? [
+        { key: 'category', value: facets.category, auto: facets.categoryIsAuto },
+        { key: 'roleType', value: facets.roleType, auto: facets.roleTypeIsAuto },
+        ...facets.locations.map((location, index) => ({
+          key: `location-${index}`,
+          value: location,
+          auto: facets.locationIsAuto,
+        })),
+      ].filter((chip) => chip.value !== UNSPECIFIED)
+    : [];
 
   return (
     <article
@@ -34,6 +47,20 @@ export default function ApplicationSummaryCard({ app, onRemove, registerRef }) {
           </div>
           <span className={`status-pill ${statusClass(app.status)}`}>{app.status}</span>
         </div>
+
+        {chips.length > 0 && (
+          <ul className="chips" aria-label="Category, role type and location">
+            {chips.map((chip) => (
+              <li
+                key={chip.key}
+                className={`chip ${chip.auto ? 'chip--auto' : ''}`}
+                title={chip.auto ? `${chip.value} — inferred from the role and notes` : chip.value}
+              >
+                {chip.value}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="summary-card__meta">
           <StaticStars value={Number(app.priority) || 0} />

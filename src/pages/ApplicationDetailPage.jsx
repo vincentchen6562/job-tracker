@@ -2,10 +2,44 @@ import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { STATUS_OPTIONS } from '../data/seedData';
+import {
+  CATEGORY_OPTIONS,
+  ROLE_TYPE_OPTIONS,
+  LOCATION_OPTIONS,
+  UNSPECIFIED,
+  deriveCategory,
+  deriveRoleType,
+  deriveLocations,
+} from '../data/taxonomy';
 import StarRating from '../components/StarRating';
 
 function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
+}
+
+// The three facet fields are inferred from the role and notes unless they are
+// set here. "Auto" writes an empty string, which hands control back to the
+// classifier.
+function FacetField({ label, value, auto, options, onChange }) {
+  return (
+    <label className="meta-field meta-field--facet">
+      <span>{label}</span>
+      <select
+        className="cell-input facet-select"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">
+          Auto{auto && auto !== UNSPECIFIED ? ` — ${auto}` : ''}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export default function ApplicationDetailPage({ application, onUpdate, onRemove }) {
@@ -93,6 +127,27 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
               onChange={(e) => onUpdate(app.id, { date: e.target.value })}
             />
           </label>
+          <FacetField
+            label="Category"
+            value={app.category || ''}
+            auto={deriveCategory(app)}
+            options={CATEGORY_OPTIONS}
+            onChange={(category) => onUpdate(app.id, { category })}
+          />
+          <FacetField
+            label="Role type"
+            value={app.roleType || ''}
+            auto={deriveRoleType(app)}
+            options={ROLE_TYPE_OPTIONS}
+            onChange={(roleType) => onUpdate(app.id, { roleType })}
+          />
+          <FacetField
+            label="Location"
+            value={app.location || ''}
+            auto={deriveLocations(app).filter((l) => l !== UNSPECIFIED).join(', ')}
+            options={LOCATION_OPTIONS}
+            onChange={(location) => onUpdate(app.id, { location })}
+          />
           <label className="meta-field meta-field--wide">
             <span>Job posting</span>
             <input

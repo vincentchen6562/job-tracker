@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import TrackerTable from './components/TrackerTable';
 import ApplicationSummaryCard from './components/ApplicationSummaryCard';
 import Toolbar from './components/Toolbar';
+import FilterBar from './components/FilterBar';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
 import { seedApplications, STATUS_OPTIONS } from './data/seedData';
+import { resolveFacets } from './data/taxonomy';
 import {
   loadApplications,
   saveApplications,
@@ -19,6 +21,13 @@ const STATUS_ORDER = STATUS_OPTIONS.reduce((acc, status, index) => {
   acc[status] = index;
   return acc;
 }, {});
+
+const NO_FILTERS = {
+  category: 'all',
+  roleType: 'all',
+  location: 'all',
+  priority: 'all',
+};
 
 function makeId() {
   return `app-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -35,7 +44,33 @@ function blankApplication() {
     jobPostingUrl: '',
     notes: '',
     detail: '',
+    // Empty means "infer from the role and notes" — see data/taxonomy.js.
+    category: '',
+    roleType: '',
+    location: '',
   };
+}
+
+// Every token has to appear somewhere, so "auckland grad" narrows rather
+// than widens.
+function matchesQuery(app, facets, tokens) {
+  if (tokens.length === 0) return true;
+  const haystack = [
+    app.company,
+    app.role,
+    app.status,
+    app.date,
+    app.notes,
+    app.detail,
+    facets.category,
+    facets.roleType,
+    facets.locations.join(' '),
+  ]
+    .filter(Boolean)
+    .join(' \n ')
+    .toLowerCase();
+
+  return tokens.every((token) => haystack.includes(token));
 }
 
 export default function App() {
@@ -44,6 +79,8 @@ export default function App() {
     () => loadApplications() ?? seedApplications
   );
   const [sort, setSort] = useState({ key: 'date', direction: 'asc' });
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState(NO_FILTERS);
   const [theme, setTheme] = useState(() => loadTheme() ?? 'light');
   const [message, setMessage] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
@@ -64,8 +101,54 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [message]);
 
+  const facetsById = useMemo(() => {
+    const map = new Map();
+    applications.forEach((app) => map.set(app.id, resolveFacets(app)));
+    return map;
+  }, [applications]);
+
+  const counts = useMemo(() => {
+    const tally = { category: {}, roleType: {}, location: {}, priority: {} };
+    const bump = (bucket, key) => {
+      tally[bucket][key] = (tally[bucket][key] ?? 0) + 1;
+    };
+
+    applications.forEach((app) => {
+      const facets = facetsById.get(app.id);
+      bump('category', facets.category);
+      bump('roleType', facets.roleType);
+      facets.locations.forEach((location) => bump('location', location));
+      bump('priority', String(Number(app.priority) || 0));
+    });
+
+    return tally;
+  }, [applications, facetsById]);
+
+  const filtersActive =
+    query.trim() !== '' || Object.values(filters).some((value) => value !== 'all');
+
+  const filtered = useMemo(() => {
+    const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+
+    return applications.filter((app) => {
+      const facets = facetsById.get(app.id);
+      if (filters.category !== 'all' && facets.category !== filters.category) return false;
+      if (filters.roleType !== 'all' && facets.roleType !== filters.roleType) return false;
+      if (filters.location !== 'all' && !facets.locations.includes(filters.location)) {
+        return false;
+      }
+      if (
+        filters.priority !== 'all' &&
+        (Number(app.priority) || 0) !== Number(filters.priority)
+      ) {
+        return false;
+      }
+      return matchesQuery(app, facets, tokens);
+    });
+  }, [applications, facetsById, filters, query]);
+
   const sorted = useMemo(() => {
-    const copy = [...applications];
+    const copy = [...filtered];
     const dir = sort.direction === 'asc' ? 1 : -1;
 
     copy.sort((a, b) => {
@@ -87,7 +170,7 @@ export default function App() {
     });
 
     return copy;
-  }, [applications, sort]);
+  }, [filtered, sort]);
 
   function updateApplication(id, patch) {
     setApplications((prev) =>
@@ -106,10 +189,22 @@ export default function App() {
     }
   }
 
+  function clearFilters() {
+    setQuery('');
+    setFilters(NO_FILTERS);
+  }
+
   function addApplication() {
     const created = blankApplication();
     setApplications((prev) => [created, ...prev]);
-    setMessage('Added a blank application.');
+    // A blank application matches nothing, so it would be added and then
+    // immediately hidden by whatever is filtered.
+    if (filtersActive) clearFilters();
+    setMessage(
+      filtersActive
+        ? 'Added a blank application — filters cleared so you can see it.'
+        : 'Added a blank application.'
+    );
     setTimeout(() => {
       cardRefs.current[created.id]?.scrollIntoView({
         behavior: 'smooth',
@@ -129,7 +224,11 @@ export default function App() {
       toMarkdown(sorted),
       'text/markdown;charset=utf-8'
     );
-    setMessage('Markdown downloaded.');
+    setMessage(
+      filtersActive
+        ? `Markdown downloaded — ${sorted.length} of ${applications.length} (filters applied).`
+        : 'Markdown downloaded.'
+    );
   }
 
   function exportJson() {
@@ -165,6 +264,7 @@ export default function App() {
     if (!window.confirm('Replace everything with the original seed data?')) return;
     clearApplications();
     setApplications(seedApplications);
+    clearFilters();
     setMessage('Reset to seed data.');
   }
 
@@ -203,14 +303,25 @@ export default function App() {
       )}
 
       {route.name !== 'detail' && (
-        <Toolbar
-          onAdd={addApplication}
-          onExportMarkdown={exportMarkdown}
-          onExportJson={exportJson}
-          onImportJson={importJson}
-          onReset={resetToSeed}
-          count={applications.length}
-        />
+        <>
+          <Toolbar
+            onAdd={addApplication}
+            onExportMarkdown={exportMarkdown}
+            onExportJson={exportJson}
+            onImportJson={importJson}
+            onReset={resetToSeed}
+          />
+          <FilterBar
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onFilterChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
+            onClear={clearFilters}
+            counts={counts}
+            shown={filtered.length}
+            total={applications.length}
+          />
+        </>
       )}
 
       {message && (
@@ -233,6 +344,11 @@ export default function App() {
             onSortChange={setSort}
             onUpdate={updateApplication}
             onRemove={removeApplication}
+            emptyMessage={
+              filtersActive
+                ? 'Nothing matches the current search and filters.'
+                : 'No applications yet. Use “Add application” to start one.'
+            }
           />
 
           <section className="cards" aria-label="Applications">
@@ -240,6 +356,7 @@ export default function App() {
               <ApplicationSummaryCard
                 key={app.id}
                 app={app}
+                facets={facetsById.get(app.id)}
                 onRemove={removeApplication}
                 registerRef={registerRef}
               />
