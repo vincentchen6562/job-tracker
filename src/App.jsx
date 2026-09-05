@@ -47,7 +47,7 @@ function blankApplication() {
     // Empty means "infer from the role and notes" — see data/taxonomy.js.
     category: '',
     roleType: '',
-    location: '',
+    locations: [],
   };
 }
 

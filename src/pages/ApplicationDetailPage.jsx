@@ -10,8 +10,10 @@ import {
   deriveCategory,
   deriveRoleType,
   deriveLocations,
+  explicitLocations,
 } from '../data/taxonomy';
 import StarRating from '../components/StarRating';
+import TagInput from '../components/TagInput';
 
 function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
@@ -70,6 +72,9 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
   }
 
   const app = application;
+  const inferredLocations = deriveLocations(app)
+    .filter((location) => location !== UNSPECIFIED)
+    .join(', ');
 
   return (
     <div className="detail-page">
@@ -141,13 +146,19 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
             options={ROLE_TYPE_OPTIONS}
             onChange={(roleType) => onUpdate(app.id, { roleType })}
           />
-          <FacetField
-            label="Location"
-            value={app.location || ''}
-            auto={deriveLocations(app).filter((l) => l !== UNSPECIFIED).join(', ')}
-            options={LOCATION_OPTIONS}
-            onChange={(location) => onUpdate(app.id, { location })}
-          />
+          <label className="meta-field meta-field--tags" htmlFor="location-tags">
+            <span>Location</span>
+            <TagInput
+              id="location-tags"
+              values={explicitLocations(app)}
+              suggestions={LOCATION_OPTIONS.filter((option) => option !== UNSPECIFIED)}
+              placeholder={
+                inferredLocations ? `Auto — ${inferredLocations}` : 'Add a city…'
+              }
+              ariaLabel="Locations for this role"
+              onChange={(locations) => onUpdate(app.id, { locations })}
+            />
+          </label>
           <label className="meta-field meta-field--wide">
             <span>Job posting</span>
             <input

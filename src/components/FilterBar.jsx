@@ -2,6 +2,7 @@ import {
   CATEGORY_OPTIONS,
   ROLE_TYPE_OPTIONS,
   LOCATION_OPTIONS,
+  UNSPECIFIED,
 } from '../data/taxonomy';
 
 const PRIORITY_OPTIONS = [
@@ -57,6 +58,16 @@ export default function FilterBar({
 
   const asOptions = (values) => values.map((value) => ({ value, label: value }));
 
+  // Locations are free text, so anything typed into a role's tag box has to
+  // show up here too — not just the premade centres.
+  const locationOptions = [
+    ...LOCATION_OPTIONS.filter((option) => option !== UNSPECIFIED),
+    ...Object.keys(counts.location)
+      .filter((name) => !LOCATION_OPTIONS.includes(name))
+      .sort((a, b) => a.localeCompare(b)),
+    UNSPECIFIED,
+  ];
+
   return (
     <div className="filter-bar">
       <div className="filter-bar__search">
@@ -107,7 +118,7 @@ export default function FilterBar({
           label="Location"
           value={filters.location}
           onChange={(value) => onFilterChange({ location: value })}
-          options={asOptions(usable(LOCATION_OPTIONS, counts.location, filters.location))}
+          options={asOptions(usable(locationOptions, counts.location, filters.location))}
           counts={counts.location}
         />
         <FacetSelect
