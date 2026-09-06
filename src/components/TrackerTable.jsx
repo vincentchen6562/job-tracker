@@ -22,7 +22,10 @@ export default function TrackerTable({
   onUpdate,
   onRemove,
   emptyMessage = 'No applications yet. Use “Add application” to start one.',
+  fillTo = 0,
 }) {
+  const fillerRows = applications.length > 0 ? Math.max(0, fillTo - applications.length) : 0;
+
   function handleSort(key) {
     if (sort.key === key) {
       onSortChange({ key, direction: sort.direction === 'asc' ? 'desc' : 'asc' });
@@ -156,6 +159,15 @@ export default function TrackerTable({
               </td>
             </tr>
           ))}
+
+          {/* A short last page would pull the pagination controls up the
+              screen; pad it out so they stay put. */}
+          {fillerRows > 0 &&
+            Array.from({ length: fillerRows }, (_, index) => (
+              <tr key={`filler-${index}`} className="filler-row" aria-hidden="true">
+                <td colSpan={COLUMNS.length + 1} />
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>
