@@ -25,7 +25,8 @@ const STATUS_ORDER = STATUS_OPTIONS.reduce((acc, status, index) => {
   return acc;
 }, {});
 
-const PAGE_SIZE = 10;
+// Cards are much taller than table rows, so a page of them is shorter.
+const PAGE_SIZE = { table: 10, cards: 6 };
 
 const NO_FILTERS = {
   category: 'all',
@@ -193,11 +194,15 @@ export default function App() {
     ? 'Nothing matches the current search and filters.'
     : 'No applications yet. Use “Add application” to start one.';
 
-  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const pageSize = PAGE_SIZE[view];
+  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
   // Deleting or filtering can strand you past the end; clamp on the way out
   // rather than fighting the state.
   const safePage = Math.min(page, pageCount);
-  const visible = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const visible = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+  // Only worth padding a short page while there is pagination to hold still.
+  const fillTo = pageCount > 1 ? pageSize : 0;
+  const fillerCards = visible.length > 0 ? Math.max(0, fillTo - visible.length) : 0;
 
   // A blank application sorts to wherever its empty date puts it, which is
   // rarely the page you are on — follow it there.
@@ -208,13 +213,13 @@ export default function App() {
       setFocusId(null);
       return undefined;
     }
-    setPage(Math.floor(index / PAGE_SIZE) + 1);
+    setPage(Math.floor(index / pageSize) + 1);
     const timer = setTimeout(() => {
       cardRefs.current[focusId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setFocusId(null);
     }, 80);
     return () => clearTimeout(timer);
-  }, [focusId, sorted]);
+  }, [focusId, sorted, pageSize]);
 
   function updateApplication(id, patch) {
     setApplications((prev) =>
@@ -387,6 +392,7 @@ export default function App() {
               onUpdate={updateApplication}
               onRemove={removeApplication}
               emptyMessage={emptyMessage}
+              fillTo={fillTo}
             />
           ) : visible.length === 0 ? (
             <p className="cards__empty">{emptyMessage}</p>
@@ -401,6 +407,10 @@ export default function App() {
                   registerRef={registerRef}
                 />
               ))}
+
+              {Array.from({ length: fillerCards }, (_, index) => (
+                <div key={`filler-${index}`} className="cards__filler" aria-hidden="true" />
+              ))}
             </section>
           )}
 
@@ -408,7 +418,7 @@ export default function App() {
             page={safePage}
             pageCount={pageCount}
             total={sorted.length}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             onChange={setPage}
           />
         </>

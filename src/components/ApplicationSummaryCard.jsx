@@ -48,19 +48,18 @@ export default function ApplicationSummaryCard({ app, facets, onRemove, register
           <span className={`status-pill ${statusClass(app.status)}`}>{app.status}</span>
         </div>
 
-        {chips.length > 0 && (
-          <ul className="chips" aria-label="Category, role type and location">
-            {chips.map((chip) => (
-              <li
-                key={chip.key}
-                className={`chip ${chip.auto ? 'chip--auto' : ''}`}
-                title={chip.auto ? `${chip.value} — inferred from the role and notes` : chip.value}
-              >
-                {chip.value}
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* Rendered even when empty so every card reserves the same room. */}
+        <ul className="chips" aria-label="Category, role type and location">
+          {chips.map((chip) => (
+            <li
+              key={chip.key}
+              className={`chip ${chip.auto ? 'chip--auto' : ''}`}
+              title={chip.auto ? `${chip.value} — inferred from the role and notes` : chip.value}
+            >
+              {chip.value}
+            </li>
+          ))}
+        </ul>
 
         <div className="summary-card__meta">
           <StaticStars value={Number(app.priority) || 0} />
