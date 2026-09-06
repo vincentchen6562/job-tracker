@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { STATUS_OPTIONS } from '../data/seedData';
 import StarRating from './StarRating';
 
@@ -23,8 +24,31 @@ export default function TrackerTable({
   onRemove,
   emptyMessage = 'No applications yet. Use “Add application” to start one.',
   fillTo = 0,
+  pendingId = null,
+  onCommitPending,
 }) {
   const fillerRows = applications.length > 0 ? Math.max(0, fillTo - applications.length) : 0;
+  const pendingInput = useRef(null);
+  const focusedFor = useRef(null);
+
+  // Put the cursor in the new row, so that leaving it is a meaningful signal
+  // that editing is done. The row only reaches this table once the jump to
+  // the last page has happened, so this waits for it to actually be there.
+  useEffect(() => {
+    if (!pendingId) {
+      focusedFor.current = null;
+      return;
+    }
+    if (focusedFor.current === pendingId || !pendingInput.current) return;
+    pendingInput.current.focus();
+    focusedFor.current = pendingId;
+  }, [pendingId, applications]);
+
+  // Focus moving anywhere outside the row ends the edit; moving between the
+  // row's own fields does not.
+  function handlePendingBlur(event) {
+    if (!event.currentTarget.contains(event.relatedTarget)) onCommitPending?.();
+  }
 
   function handleSort(key) {
     if (sort.key === key) {
@@ -71,9 +95,14 @@ export default function TrackerTable({
           )}
 
           {applications.map((app) => (
-            <tr key={app.id}>
+            <tr
+              key={app.id}
+              className={app.id === pendingId ? 'pending-row' : undefined}
+              onBlur={app.id === pendingId ? handlePendingBlur : undefined}
+            >
               <td>
                 <input
+                  ref={app.id === pendingId ? pendingInput : undefined}
                   className="cell-input cell-input--strong"
                   value={app.company}
                   placeholder="Company"

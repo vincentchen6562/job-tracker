@@ -17,7 +17,13 @@ function StaticStars({ value = 0 }) {
   );
 }
 
-export default function ApplicationSummaryCard({ app, facets, onRemove, registerRef }) {
+export default function ApplicationSummaryCard({
+  app,
+  facets,
+  pending = false,
+  onRemove,
+  registerRef,
+}) {
   const href = `#/app/${encodeURIComponent(app.id)}`;
   const chips = facets
     ? [
@@ -33,7 +39,7 @@ export default function ApplicationSummaryCard({ app, facets, onRemove, register
 
   return (
     <article
-      className="summary-card"
+      className={`summary-card ${pending ? 'summary-card--pending' : ''}`}
       id={`app-${app.id}`}
       ref={(node) => registerRef(app.id, node)}
     >
