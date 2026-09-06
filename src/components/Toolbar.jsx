@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import ViewToggle from './ViewToggle';
 
 export default function Toolbar({
   onAdd,
@@ -6,6 +7,8 @@ export default function Toolbar({
   onExportJson,
   onImportJson,
   onReset,
+  view,
+  onViewChange,
 }) {
   const fileInput = useRef(null);
 
@@ -25,6 +28,7 @@ export default function Toolbar({
         <button type="button" className="btn btn--primary" onClick={onAdd}>
           Add application
         </button>
+        <ViewToggle view={view} onChange={onViewChange} />
       </div>
 
       <div className="toolbar__group">
