@@ -3,6 +3,7 @@ import TrackerTable from './components/TrackerTable';
 import ApplicationSummaryCard from './components/ApplicationSummaryCard';
 import Toolbar from './components/Toolbar';
 import FilterBar from './components/FilterBar';
+import Pagination from './components/Pagination';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
 import { seedApplications, STATUS_OPTIONS } from './data/seedData';
@@ -13,6 +14,8 @@ import {
   clearApplications,
   loadTheme,
   saveTheme,
+  loadView,
+  saveView,
 } from './utils/storage';
 import { parseTrackerDate } from './utils/date';
 import { toMarkdown, toJson, downloadFile } from './utils/exportData';
@@ -21,6 +24,8 @@ const STATUS_ORDER = STATUS_OPTIONS.reduce((acc, status, index) => {
   acc[status] = index;
   return acc;
 }, {});
+
+const PAGE_SIZE = 10;
 
 const NO_FILTERS = {
   category: 'all',
@@ -81,6 +86,9 @@ export default function App() {
   const [sort, setSort] = useState({ key: 'date', direction: 'asc' });
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(NO_FILTERS);
+  const [view, setView] = useState(() => loadView() ?? 'table');
+  const [page, setPage] = useState(1);
+  const [focusId, setFocusId] = useState(null);
   const [theme, setTheme] = useState(() => loadTheme() ?? 'light');
   const [message, setMessage] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
@@ -94,6 +102,15 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     saveTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    saveView(view);
+  }, [view]);
+
+  // Narrowing the list should put you back at the start of it.
+  useEffect(() => {
+    setPage(1);
+  }, [query, filters]);
 
   useEffect(() => {
     if (!message) return undefined;
@@ -172,6 +189,33 @@ export default function App() {
     return copy;
   }, [filtered, sort]);
 
+  const emptyMessage = filtersActive
+    ? 'Nothing matches the current search and filters.'
+    : 'No applications yet. Use “Add application” to start one.';
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  // Deleting or filtering can strand you past the end; clamp on the way out
+  // rather than fighting the state.
+  const safePage = Math.min(page, pageCount);
+  const visible = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // A blank application sorts to wherever its empty date puts it, which is
+  // rarely the page you are on — follow it there.
+  useEffect(() => {
+    if (!focusId) return undefined;
+    const index = sorted.findIndex((app) => app.id === focusId);
+    if (index === -1) {
+      setFocusId(null);
+      return undefined;
+    }
+    setPage(Math.floor(index / PAGE_SIZE) + 1);
+    const timer = setTimeout(() => {
+      cardRefs.current[focusId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setFocusId(null);
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [focusId, sorted]);
+
   function updateApplication(id, patch) {
     setApplications((prev) =>
       prev.map((app) => (app.id === id ? { ...app, ...patch } : app))
@@ -205,12 +249,7 @@ export default function App() {
         ? 'Added a blank application — filters cleared so you can see it.'
         : 'Added a blank application.'
     );
-    setTimeout(() => {
-      cardRefs.current[created.id]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }, 60);
+    setFocusId(created.id);
   }
 
   function registerRef(id, node) {
@@ -310,6 +349,8 @@ export default function App() {
             onExportJson={exportJson}
             onImportJson={importJson}
             onReset={resetToSeed}
+            view={view}
+            onViewChange={setView}
           />
           <FilterBar
             query={query}
@@ -338,30 +379,38 @@ export default function App() {
         />
       ) : (
         <>
-          <TrackerTable
-            applications={sorted}
-            sort={sort}
-            onSortChange={setSort}
-            onUpdate={updateApplication}
-            onRemove={removeApplication}
-            emptyMessage={
-              filtersActive
-                ? 'Nothing matches the current search and filters.'
-                : 'No applications yet. Use “Add application” to start one.'
-            }
-          />
+          {view === 'table' ? (
+            <TrackerTable
+              applications={visible}
+              sort={sort}
+              onSortChange={setSort}
+              onUpdate={updateApplication}
+              onRemove={removeApplication}
+              emptyMessage={emptyMessage}
+            />
+          ) : visible.length === 0 ? (
+            <p className="cards__empty">{emptyMessage}</p>
+          ) : (
+            <section className="cards" aria-label="Applications">
+              {visible.map((app) => (
+                <ApplicationSummaryCard
+                  key={app.id}
+                  app={app}
+                  facets={facetsById.get(app.id)}
+                  onRemove={removeApplication}
+                  registerRef={registerRef}
+                />
+              ))}
+            </section>
+          )}
 
-          <section className="cards" aria-label="Applications">
-            {sorted.map((app) => (
-              <ApplicationSummaryCard
-                key={app.id}
-                app={app}
-                facets={facetsById.get(app.id)}
-                onRemove={removeApplication}
-                registerRef={registerRef}
-              />
-            ))}
-          </section>
+          <Pagination
+            page={safePage}
+            pageCount={pageCount}
+            total={sorted.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
+          />
         </>
       )}
     </div>
