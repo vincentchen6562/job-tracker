@@ -392,6 +392,17 @@ textarea:focus-visible {
   background: var(--surface-alt);
 }
 
+/* Held out of the sort while it is being filled in — marked so its position
+   at the end of the list reads as deliberate. */
+.tracker-table tbody tr.pending-row,
+.tracker-table tbody tr.pending-row:hover {
+  background: var(--accent-soft);
+}
+
+.tracker-table tbody tr.pending-row td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 /* Padding on a short last page — same height as a real row, no hover.
    box-sizing is border-box, so this is the whole row, padding included. */
 .filler-row td {
@@ -598,6 +609,15 @@ textarea:focus-visible {
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+/* Held out of the sort while it is being filled in — marked so its position
+   at the end of the list reads as deliberate. Defined after .summary-card so
+   the base border and shadow do not win. */
+.summary-card--pending,
+.summary-card--pending:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
 }
 
 .summary-card:hover {

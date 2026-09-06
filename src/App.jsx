@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TrackerTable from './components/TrackerTable';
 import ApplicationSummaryCard from './components/ApplicationSummaryCard';
 import Toolbar from './components/Toolbar';
@@ -90,6 +90,11 @@ export default function App() {
   const [view, setView] = useState(() => loadView() ?? 'table');
   const [page, setPage] = useState(1);
   const [focusId, setFocusId] = useState(null);
+  // A just-added application is held out of the sort and the filters, parked
+  // at the end of the list, until editing finishes. Deliberately not
+  // persisted — a reload releases it.
+  const [pendingId, setPendingId] = useState(null);
+  const visitedPendingDetail = useRef(false);
   const [theme, setTheme] = useState(() => loadTheme() ?? 'light');
   const [message, setMessage] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
@@ -145,11 +150,9 @@ export default function App() {
   const filtersActive =
     query.trim() !== '' || Object.values(filters).some((value) => value !== 'all');
 
-  const filtered = useMemo(() => {
-    const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
-
-    return applications.filter((app) => {
-      const facets = facetsById.get(app.id);
+  const matchesFilters = useCallback(
+    (app) => {
+      const facets = facetsById.get(app.id) ?? resolveFacets(app);
       if (filters.category !== 'all' && facets.category !== filters.category) return false;
       if (filters.roleType !== 'all' && facets.roleType !== filters.roleType) return false;
       if (filters.location !== 'all' && !facets.locations.includes(filters.location)) {
@@ -161,9 +164,15 @@ export default function App() {
       ) {
         return false;
       }
-      return matchesQuery(app, facets, tokens);
-    });
-  }, [applications, facetsById, filters, query]);
+      return matchesQuery(app, facets, query.toLowerCase().split(/\s+/).filter(Boolean));
+    },
+    [facetsById, filters, query]
+  );
+
+  const filtered = useMemo(
+    () => applications.filter((app) => app.id !== pendingId && matchesFilters(app)),
+    [applications, matchesFilters, pendingId]
+  );
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -190,25 +199,32 @@ export default function App() {
     return copy;
   }, [filtered, sort]);
 
+  // Parked at the very end, so it lands on the last page and stays put while
+  // the fields it would sort on are still being typed.
+  const pendingApp = pendingId
+    ? applications.find((app) => app.id === pendingId) ?? null
+    : null;
+  const ordered = pendingApp ? [...sorted, pendingApp] : sorted;
+
   const emptyMessage = filtersActive
     ? 'Nothing matches the current search and filters.'
     : 'No applications yet. Use “Add application” to start one.';
 
   const pageSize = PAGE_SIZE[view];
-  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(ordered.length / pageSize));
   // Deleting or filtering can strand you past the end; clamp on the way out
   // rather than fighting the state.
   const safePage = Math.min(page, pageCount);
-  const visible = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const visible = ordered.slice((safePage - 1) * pageSize, safePage * pageSize);
   // Only worth padding a short page while there is pagination to hold still.
   const fillTo = pageCount > 1 ? pageSize : 0;
   const fillerCards = visible.length > 0 ? Math.max(0, fillTo - visible.length) : 0;
 
-  // A blank application sorts to wherever its empty date puts it, which is
-  // rarely the page you are on — follow it there.
+  // The new row is parked at the end of the list, so jump to the page that
+  // end sits on.
   useEffect(() => {
     if (!focusId) return undefined;
-    const index = sorted.findIndex((app) => app.id === focusId);
+    const index = ordered.findIndex((app) => app.id === focusId);
     if (index === -1) {
       setFocusId(null);
       return undefined;
@@ -219,7 +235,34 @@ export default function App() {
       setFocusId(null);
     }, 80);
     return () => clearTimeout(timer);
-  }, [focusId, sorted, pageSize]);
+  }, [focusId, ordered, pageSize]);
+
+  // Editing is over: let the row rejoin the sort and face the filters.
+  function commitPending() {
+    if (!pendingId) return;
+    const app = applications.find((item) => item.id === pendingId);
+    setPendingId(null);
+    if (app && filtersActive && !matchesFilters(app)) {
+      setMessage(
+        `${app.company || 'That application'} is hidden by the current filters.`
+      );
+    }
+  }
+
+  // Card view has no inline editing — the detail page is where it happens, so
+  // coming back from it is the signal that editing is finished.
+  useEffect(() => {
+    if (!pendingId) {
+      visitedPendingDetail.current = false;
+      return;
+    }
+    if (route.name === 'detail' && route.id === pendingId) {
+      visitedPendingDetail.current = true;
+    } else if (visitedPendingDetail.current) {
+      visitedPendingDetail.current = false;
+      setPendingId(null);
+    }
+  }, [route, pendingId]);
 
   function updateApplication(id, patch) {
     setApplications((prev) =>
@@ -232,6 +275,7 @@ export default function App() {
     const name = target?.company || 'this application';
     if (!window.confirm(`Remove ${name}? This can't be undone.`)) return;
     setApplications((prev) => prev.filter((app) => app.id !== id));
+    if (id === pendingId) setPendingId(null);
     setMessage(`Removed ${name}.`);
     if (route.name === 'detail' && route.id === id) {
       window.location.hash = '#/';
@@ -246,15 +290,15 @@ export default function App() {
   function addApplication() {
     const created = blankApplication();
     setApplications((prev) => [created, ...prev]);
-    // A blank application matches nothing, so it would be added and then
-    // immediately hidden by whatever is filtered.
-    if (filtersActive) clearFilters();
-    setMessage(
-      filtersActive
-        ? 'Added a blank application — filters cleared so you can see it.'
-        : 'Added a blank application.'
-    );
+    // Held at the end of the list rather than dropped into its sorted place,
+    // which would move it out from under the cursor mid-edit.
+    setPendingId(created.id);
     setFocusId(created.id);
+    setMessage(
+      view === 'table'
+        ? 'Added a blank application at the end — it sorts into place when you finish editing.'
+        : 'Added a blank application at the end — open it to fill it in.'
+    );
   }
 
   function registerRef(id, node) {
@@ -265,12 +309,12 @@ export default function App() {
   function exportMarkdown() {
     downloadFile(
       'application-tracker.md',
-      toMarkdown(sorted),
+      toMarkdown(ordered),
       'text/markdown;charset=utf-8'
     );
     setMessage(
       filtersActive
-        ? `Markdown downloaded — ${sorted.length} of ${applications.length} (filters applied).`
+        ? `Markdown downloaded — ${ordered.length} of ${applications.length} (filters applied).`
         : 'Markdown downloaded.'
     );
   }
@@ -364,7 +408,7 @@ export default function App() {
             onFilterChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
             onClear={clearFilters}
             counts={counts}
-            shown={filtered.length}
+            shown={ordered.length}
             total={applications.length}
           />
         </>
@@ -393,6 +437,8 @@ export default function App() {
               onRemove={removeApplication}
               emptyMessage={emptyMessage}
               fillTo={fillTo}
+              pendingId={pendingId}
+              onCommitPending={commitPending}
             />
           ) : visible.length === 0 ? (
             <p className="cards__empty">{emptyMessage}</p>
@@ -403,6 +449,7 @@ export default function App() {
                   key={app.id}
                   app={app}
                   facets={facetsById.get(app.id)}
+                  pending={app.id === pendingId}
                   onRemove={removeApplication}
                   registerRef={registerRef}
                 />
@@ -417,7 +464,7 @@ export default function App() {
           <Pagination
             page={safePage}
             pageCount={pageCount}
-            total={sorted.length}
+            total={ordered.length}
             pageSize={pageSize}
             onChange={setPage}
           />
