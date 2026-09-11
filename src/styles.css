@@ -452,7 +452,7 @@ textarea:focus-visible {
 }
 
 .col-actions {
-  width: 84px;
+  width: 148px;
   white-space: nowrap;
   text-align: right;
 }
@@ -689,7 +689,10 @@ textarea:focus-visible {
 .summary-card__meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Not space-between: with the doc badges there are three children, and
+     space-between would strand the date in the middle. Stars and date stay
+     grouped left, .doc-badges takes the right with margin-left: auto. */
+  justify-content: flex-start;
   gap: 10px;
   margin-top: 12px;
 }
@@ -893,6 +896,162 @@ textarea:focus-visible {
 /* Inferred rather than set by hand — dashed border says "best guess". */
 .chip--auto {
   border-style: dashed;
+}
+
+/* Attachments -------------------------------------------------------- */
+
+.documents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.attachment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Two slots share a row on a wide card, one per row once it narrows. */
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.attachment__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.attachment__drop {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  background: transparent;
+  /* Dashed says "empty slot" the same way .chip--auto says "guess". */
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.attachment__drop:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+
+.attachment__drop:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.attachment__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  min-width: 0;
+}
+
+.attachment__name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  /* Takes the slack so the buttons sit hard right. */
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.attachment__name:hover .attachment__filename {
+  text-decoration: underline;
+}
+
+.attachment__icon {
+  flex-shrink: 0;
+  color: var(--ink-soft);
+}
+
+/* A long filename truncates rather than pushing the buttons off the card. */
+.attachment__filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment__size {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.ghost-btn--tiny {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  padding: 3px 8px;
+}
+
+/* Presence indicators ------------------------------------------------- */
+
+/* Card view: a pair of pills that read the same whether or not the file is
+   there, so a missing document is as visible as a present one. */
+.doc-badges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.doc-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  opacity: 0.45;
+}
+
+.doc-badge--on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  opacity: 1;
+}
+
+/* Table view: the same idea, squeezed into the actions column so no new
+   column is needed. */
+.doc-dot {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--ink-soft);
+  opacity: 0.35;
+}
+
+.doc-dot--on {
+  color: var(--accent);
+  background: var(--accent-soft);
+  opacity: 1;
 }
 
 /* Detail page --------------------------------------------------------- */
@@ -1283,6 +1442,10 @@ textarea:focus-visible {
 
   .filter-field {
     flex-basis: calc(50% - 5px);
+  }
+
+  .attachment {
+    flex-basis: 100%;
   }
 
   .filter-bar__status {

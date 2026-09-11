@@ -17,6 +17,29 @@ function StaticStars({ value = 0 }) {
   );
 }
 
+// Which documents are attached, at a glance. Dimmed when missing, so the
+// gap is as readable as the presence.
+function DocBadges({ app }) {
+  const slots = [
+    { key: 'cv', short: 'CV', meta: app.cv },
+    { key: 'coverLetter', short: 'CL', meta: app.coverLetter },
+  ];
+
+  return (
+    <span className="doc-badges">
+      {slots.map(({ key, short, meta }) => (
+        <span
+          key={key}
+          className={`doc-badge ${meta ? 'doc-badge--on' : ''}`}
+          title={meta ? meta.name : `No ${short === 'CV' ? 'CV' : 'cover letter'} attached`}
+        >
+          {short}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function ApplicationSummaryCard({
   app,
   facets,
@@ -70,6 +93,7 @@ export default function ApplicationSummaryCard({
         <div className="summary-card__meta">
           <StaticStars value={Number(app.priority) || 0} />
           <span className="summary-card__date">{app.date || 'No date'}</span>
+          <DocBadges app={app} />
         </div>
 
         {app.notes ? (

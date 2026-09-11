@@ -170,6 +170,22 @@ export default function TrackerTable({
                 </div>
               </td>
               <td className="col-actions">
+                <span
+                  className={`doc-dot ${app.cv ? 'doc-dot--on' : ''}`}
+                  title={app.cv ? `CV: ${app.cv.name}` : 'No CV attached'}
+                >
+                  CV
+                </span>
+                <span
+                  className={`doc-dot ${app.coverLetter ? 'doc-dot--on' : ''}`}
+                  title={
+                    app.coverLetter
+                      ? `Cover letter: ${app.coverLetter.name}`
+                      : 'No cover letter attached'
+                  }
+                >
+                  CL
+                </span>
                 <a
                   className="icon-btn"
                   title={`View details for ${app.company || 'this application'}`}
