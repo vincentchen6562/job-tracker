@@ -14,6 +14,7 @@ import {
 } from '../data/taxonomy';
 import StarRating from '../components/StarRating';
 import TagInput from '../components/TagInput';
+import AttachmentField from '../components/AttachmentField';
 
 function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
@@ -44,7 +45,7 @@ function FacetField({ label, value, auto, options, onChange }) {
   );
 }
 
-export default function ApplicationDetailPage({ application, onUpdate, onRemove }) {
+export default function ApplicationDetailPage({ application, onUpdate, onRemove, onNotice }) {
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -179,6 +180,21 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
             onChange={(e) => onUpdate(app.id, { notes: e.target.value })}
           />
         </label>
+
+        <section className="documents" aria-label="Documents">
+          <AttachmentField
+            label="CV"
+            meta={app.cv}
+            onChange={(meta) => onUpdate(app.id, { cv: meta })}
+            onError={onNotice}
+          />
+          <AttachmentField
+            label="Cover letter"
+            meta={app.coverLetter}
+            onChange={(meta) => onUpdate(app.id, { coverLetter: meta })}
+            onError={onNotice}
+          />
+        </section>
 
         <div className="card__toolbar">
           <button type="button" className="ghost-btn" onClick={() => setEditing((v) => !v)}>
