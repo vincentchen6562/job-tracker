@@ -41,8 +41,6 @@ function makeId() {
   return `app-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-// Empty facets mean "infer from the role, summary and details" — see
-// data/taxonomy.js.
 function blankApplication() {
   return { id: makeId(), ...applicationDefaults() };
 }

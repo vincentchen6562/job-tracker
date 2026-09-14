@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PRIORITY_MIN, PRIORITY_MAX } from '@job-tracker/shared';
 
 // One star per rated level; the unrated minimum has no star of its own.
-const LEVELS = Array.from(
+export const STAR_LEVELS = Array.from(
   { length: PRIORITY_MAX - PRIORITY_MIN },
   (_, index) => PRIORITY_MIN + index + 1
 );
@@ -18,7 +18,7 @@ export default function StarRating({ value = PRIORITY_MIN, onChange, label = 'Pr
       aria-label={label}
       onMouseLeave={() => setHover(0)}
     >
-      {LEVELS.map((level) => (
+      {STAR_LEVELS.map((level) => (
         <button
           key={level}
           type="button"

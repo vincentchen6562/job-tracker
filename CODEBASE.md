@@ -409,7 +409,7 @@ it up — one variable per status drives the pill, the select and the stripe.
 ## 10. Things worth knowing before you change anything
 
 - **Adding a status** means three places, not one: `STATUS_OPTIONS` in
-  `seedData.js`, a `--status-<slug>` variable in *both* `:root` blocks, and a
+  `shared/src/statuses.js`, a `--status-<slug>` variable in *both* `:root` blocks, and a
   `.status--<slug>` rule. The slug is lowercase with spaces → hyphens. Position
   in `STATUS_OPTIONS` also sets its sort order, via `STATUS_ORDER`.
 - **`'Refused'` is currently missing its CSS.** It was added to `STATUS_OPTIONS`

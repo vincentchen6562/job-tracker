@@ -17,7 +17,7 @@ Then open the URL it prints (usually http://localhost:5173).
 To produce a static build you can host anywhere:
 
 ```bash
-npm run build     # output lands in dist/
+npm run build     # output lands in client/dist/
 npm run preview   # serve that build locally
 ```
 
@@ -31,7 +31,7 @@ npm run preview   # serve that build locally
 - **Download markdown** regenerates the tracker as a markdown document — the
   summary table plus one section per application.
 - **Reset to seed data** wipes your saved data and returns to the applications
-  in `src/data/seedData.js`.
+  in `client/src/data/seedData.js`.
 
 ## Editing
 
@@ -67,8 +67,8 @@ src/
 
 ## Changing the starting data
 
-`src/data/seedData.js` holds the applications loaded on first run, and
-`STATUS_OPTIONS` defines the dropdown values. If you add or rename a status,
+`client/src/data/seedData.js` holds the applications loaded on first run, and
+`STATUS_OPTIONS` in `shared/src/statuses.js` defines the dropdown values. If you add or rename a status,
 also add a matching `--status-*` colour variable and `.status--*` rule in
 `styles.css` — the slug is the lowercased name with spaces replaced by hyphens,
 so "In progress" becomes `.status--in-progress`.

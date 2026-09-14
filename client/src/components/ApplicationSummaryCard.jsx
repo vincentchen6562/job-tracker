@@ -1,11 +1,6 @@
 import { PRIORITY_MIN, PRIORITY_MAX } from '@job-tracker/shared';
 import { UNSPECIFIED } from '../data/taxonomy';
-
-// One star per rated level; the unrated minimum has no star of its own.
-const LEVELS = Array.from(
-  { length: PRIORITY_MAX - PRIORITY_MIN },
-  (_, index) => PRIORITY_MIN + index + 1
-);
+import { STAR_LEVELS } from './StarRating';
 
 function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
@@ -14,7 +9,7 @@ function statusClass(status) {
 function StaticStars({ value = PRIORITY_MIN }) {
   return (
     <span className="stars stars--static" aria-label={`Priority ${value} of ${PRIORITY_MAX}`}>
-      {LEVELS.map((level) => (
+      {STAR_LEVELS.map((level) => (
         <span key={level} className={`star ${level <= value ? 'star--on' : ''}`}>
           ★
         </span>

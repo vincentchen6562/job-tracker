@@ -15,7 +15,7 @@ const PRIORITY_OPTIONS = Array.from(
   label:
     level === PRIORITY_MIN
       ? 'Unrated'
-      : '★'.repeat(level - PRIORITY_MIN) + '☆'.repeat(PRIORITY_MAX - level),
+      : '★'.repeat(level) + '☆'.repeat(PRIORITY_MAX - level),
 }));
 
 // Only offer values that actually exist in the tracker, so the dropdowns stay
