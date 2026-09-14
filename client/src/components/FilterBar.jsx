@@ -1,3 +1,4 @@
+import { PRIORITY_MIN, PRIORITY_MAX } from '@job-tracker/shared';
 import {
   CATEGORY_OPTIONS,
   ROLE_TYPE_OPTIONS,
@@ -5,14 +6,17 @@ import {
   UNSPECIFIED,
 } from '../data/taxonomy';
 
-const PRIORITY_OPTIONS = [
-  { value: '5', label: '★★★★★' },
-  { value: '4', label: '★★★★☆' },
-  { value: '3', label: '★★★☆☆' },
-  { value: '2', label: '★★☆☆☆' },
-  { value: '1', label: '★☆☆☆☆' },
-  { value: '0', label: 'Unrated' },
-];
+// Highest priority first, down to unrated.
+const PRIORITY_OPTIONS = Array.from(
+  { length: PRIORITY_MAX - PRIORITY_MIN + 1 },
+  (_, index) => PRIORITY_MAX - index
+).map((level) => ({
+  value: String(level),
+  label:
+    level === PRIORITY_MIN
+      ? 'Unrated'
+      : '★'.repeat(level - PRIORITY_MIN) + '☆'.repeat(PRIORITY_MAX - level),
+}));
 
 // Only offer values that actually exist in the tracker, so the dropdowns stay
 // short. The current selection is always kept, even at zero, so the control

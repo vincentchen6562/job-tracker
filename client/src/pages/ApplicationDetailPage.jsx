@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { STATUS_OPTIONS } from '../data/seedData';
+import { STATUS_OPTIONS } from '@job-tracker/shared';
 import {
   CATEGORY_OPTIONS,
   ROLE_TYPE_OPTIONS,

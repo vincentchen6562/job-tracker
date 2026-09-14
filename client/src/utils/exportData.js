@@ -2,6 +2,7 @@
 // original notes document: a summary table on top, then one section per
 // application.
 
+import { PRIORITY_MAX } from '@job-tracker/shared';
 import { resolveFacets, UNSPECIFIED } from '../data/taxonomy';
 
 function slug(text) {
@@ -17,7 +18,7 @@ function cell(value) {
 
 function stars(count) {
   const n = Number(count) || 0;
-  return n > 0 ? '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n)) : '—';
+  return n > 0 ? '★'.repeat(n) + '☆'.repeat(Math.max(0, PRIORITY_MAX - n)) : '—';
 }
 
 export function toMarkdown(applications) {

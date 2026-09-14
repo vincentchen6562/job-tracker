@@ -3,17 +3,6 @@
 // data in localStorage wins. Use "Reset to seed data" in the toolbar to
 // come back to this starting point.
 
-export const STATUS_OPTIONS = [
-  'Not started',
-  'In progress',
-  'Submitted',
-  'Interview',
-  'Offer',
-  'Rejected',
-  'Refused',
-  'No response',
-];
-
 export const seedApplications = [
   {
     id: 'kowhai-labs',

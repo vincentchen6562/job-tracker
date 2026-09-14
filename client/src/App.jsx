@@ -6,7 +6,8 @@ import FilterBar from './components/FilterBar';
 import Pagination from './components/Pagination';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
-import { seedApplications, STATUS_OPTIONS } from './data/seedData';
+import { STATUS_OPTIONS, applicationDefaults } from '@job-tracker/shared';
+import { seedApplications } from './data/seedData';
 import { resolveFacets } from './data/taxonomy';
 import {
   loadApplications,
@@ -40,23 +41,10 @@ function makeId() {
   return `app-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// Empty facets mean "infer from the role, summary and details" — see
+// data/taxonomy.js.
 function blankApplication() {
-  return {
-    id: makeId(),
-    company: '',
-    role: '',
-    status: 'Not started',
-    date: '',
-    priority: 0,
-    jobPostingUrl: '',
-    summary: '',
-    details: '',
-    // Empty means "infer from the role, summary and details" — see
-    // data/taxonomy.js.
-    category: '',
-    roleType: '',
-    locations: [],
-  };
+  return { id: makeId(), ...applicationDefaults() };
 }
 
 // Every token has to appear somewhere, so "auckland grad" narrows rather

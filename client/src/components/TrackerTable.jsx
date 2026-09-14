@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { STATUS_OPTIONS } from '../data/seedData';
+import { STATUS_OPTIONS } from '@job-tracker/shared';
 import StarRating from './StarRating';
 
 const COLUMNS = [
