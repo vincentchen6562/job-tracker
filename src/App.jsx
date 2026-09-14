@@ -49,9 +49,10 @@ function blankApplication() {
     date: '',
     priority: 0,
     jobPostingUrl: '',
-    notes: '',
-    detail: '',
-    // Empty means "infer from the role and notes" — see data/taxonomy.js.
+    summary: '',
+    details: '',
+    // Empty means "infer from the role, summary and details" — see
+    // data/taxonomy.js.
     category: '',
     roleType: '',
     locations: [],
@@ -67,8 +68,8 @@ function matchesQuery(app, facets, tokens) {
     app.role,
     app.status,
     app.date,
-    app.notes,
-    app.detail,
+    app.summary,
+    app.details,
     facets.category,
     facets.roleType,
     facets.locations.join(' '),

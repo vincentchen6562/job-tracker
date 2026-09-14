@@ -79,7 +79,7 @@ export default function FilterBar({
           type="search"
           className="filter-bar__input"
           value={query}
-          placeholder="Search company, role, notes, details…"
+          placeholder="Search company, role, summary, details…"
           aria-label="Search applications"
           onChange={(e) => onQueryChange(e.target.value)}
         />

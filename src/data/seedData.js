@@ -22,8 +22,8 @@ export const seedApplications = [
     date: '3 Aug 2026',
     priority: 5,
     jobPostingUrl: 'https://example.com/careers/kowhai-labs/graduate-software-engineer',
-    notes: 'Online form. CV, cover letter and transcript uploaded.',
-    detail: `### Target role
+    summary: 'Online form. CV, cover letter and transcript uploaded.',
+    details: `### Target role
 
 **Graduate Software Engineer — 2027 intake**
 Kōwhai Labs · Auckland CBD · Applications close **15 August 2026**
@@ -57,8 +57,8 @@ Kōwhai Labs · Auckland CBD · Applications close **15 August 2026**
     date: 'Jul 2026',
     priority: 4,
     jobPostingUrl: 'https://example.com/careers/tidewater-health/test-automation',
-    notes: 'Second-round technical interview booked.',
-    detail: `### Target role
+    summary: 'Second-round technical interview booked.',
+    details: `### Target role
 
 **Graduate Test Automation Engineer**
 Tidewater Health · Wellington or Christchurch · Hybrid
@@ -87,8 +87,8 @@ Joins the team that tests patient-booking software used by regional clinics.
     date: '28 Jul 2026',
     priority: 3,
     jobPostingUrl: 'https://example.com/careers/harakeke-analytics/junior-data-analyst',
-    notes: 'Offer received. Reply due 11 Aug.',
-    detail: `### Offer
+    summary: 'Offer received. Reply due 11 Aug.',
+    details: `### Offer
 
 **Junior Data Analyst** · 12-month fixed-term contract · Fully remote
 
@@ -116,8 +116,8 @@ Waiting on the other interviews before replying.`,
     date: '12 Jun 2026',
     priority: 2,
     jobPostingUrl: 'https://example.com/careers/southern-lights-bank/summer-intern-security',
-    notes: 'Rejected after the online assessment.',
-    detail: `### Target role
+    summary: 'Rejected after the online assessment.',
+    details: `### Target role
 
 **Summer Internship — Cyber Security**
 Southern Lights Bank · Dunedin · 12 weeks over summer
@@ -141,8 +141,8 @@ Southern Lights Bank · Dunedin · 12 weeks over summer
     date: '',
     priority: 0,
     jobPostingUrl: 'https://example.com/careers/puriri-energy/service-desk-analyst',
-    notes: 'Cover letter half written.',
-    detail: `### Target role
+    summary: 'Cover letter half written.',
+    details: `### Target role
 
 **IT Service Desk Analyst**
 Pūriri Energy · Hamilton · Full time · Rotating roster, one weekend in four
@@ -162,8 +162,8 @@ Pūriri Energy · Hamilton · Full time · Rotating roster, one weekend in four
     date: '',
     priority: 1,
     jobPostingUrl: '',
-    notes: 'Met them at a careers fair. Find the posting.',
-    detail: `### Notes
+    summary: 'Met them at a careers fair. Find the posting.',
+    details: `### Notes
 
 Nothing captured yet. Add the role title, the posting link, and what the ad asks for.`,
   },

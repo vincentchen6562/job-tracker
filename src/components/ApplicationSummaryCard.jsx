@@ -60,7 +60,11 @@ export default function ApplicationSummaryCard({
             <li
               key={chip.key}
               className={`chip ${chip.auto ? 'chip--auto' : ''}`}
-              title={chip.auto ? `${chip.value} — inferred from the role and notes` : chip.value}
+              title={
+                chip.auto
+                  ? `${chip.value} — inferred from the role, summary and details`
+                  : chip.value
+              }
             >
               {chip.value}
             </li>
@@ -72,10 +76,10 @@ export default function ApplicationSummaryCard({
           <span className="summary-card__date">{app.date || 'No date'}</span>
         </div>
 
-        {app.notes ? (
-          <p className="summary-card__notes">{app.notes}</p>
+        {app.summary ? (
+          <p className="summary-card__summary">{app.summary}</p>
         ) : (
-          <p className="summary-card__notes summary-card__notes--empty">No summary yet.</p>
+          <p className="summary-card__summary summary-card__summary--empty">No summary yet.</p>
         )}
       </a>
 

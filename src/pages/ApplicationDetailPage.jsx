@@ -19,9 +19,9 @@ function statusClass(status) {
   return `status--${String(status).toLowerCase().replace(/\s+/g, '-')}`;
 }
 
-// The three facet fields are inferred from the role and notes unless they are
-// set here. "Auto" writes an empty string, which hands control back to the
-// classifier.
+// The three facet fields are inferred from the role, summary and details
+// unless they are set here. "Auto" writes an empty string, which hands
+// control back to the classifier.
 function FacetField({ label, value, auto, options, onChange }) {
   return (
     <label className="meta-field meta-field--facet">
@@ -174,15 +174,15 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
           <span>Summary</span>
           <input
             className="cell-input"
-            value={app.notes}
+            value={app.summary}
             placeholder="One line you'll see on the summary card"
-            onChange={(e) => onUpdate(app.id, { notes: e.target.value })}
+            onChange={(e) => onUpdate(app.id, { summary: e.target.value })}
           />
         </label>
 
         <div className="card__toolbar">
           <button type="button" className="ghost-btn" onClick={() => setEditing((v) => !v)}>
-            {editing ? 'Done editing' : 'Edit notes'}
+            {editing ? 'Done editing' : 'Edit details'}
           </button>
           {app.jobPostingUrl && (
             <a
@@ -207,18 +207,18 @@ export default function ApplicationDetailPage({ application, onUpdate, onRemove 
           {editing ? (
             <textarea
               className="detail-editor"
-              value={app.detail}
-              placeholder="Markdown notes — headings, tables, lists all work."
-              onChange={(e) => onUpdate(app.id, { detail: e.target.value })}
+              value={app.details}
+              placeholder="Markdown details — headings, tables, lists all work."
+              onChange={(e) => onUpdate(app.id, { details: e.target.value })}
               rows={18}
             />
-          ) : app.detail?.trim() ? (
+          ) : app.details?.trim() ? (
             <div className="markdown">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{app.detail}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{app.details}</ReactMarkdown>
             </div>
           ) : (
             <p className="card__empty">
-              No notes yet. Choose “Edit notes” to write them in markdown.
+              No details yet. Choose “Edit details” to write them in markdown.
             </p>
           )}
         </div>

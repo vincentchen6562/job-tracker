@@ -710,7 +710,7 @@ textarea:focus-visible {
 }
 
 /* Same two-line reservation as the role, for the same reason. */
-.summary-card__notes {
+.summary-card__summary {
   margin: 10px 0 0;
   font-size: 12.5px;
   line-height: 1.6;
@@ -722,7 +722,7 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
-.summary-card__notes--empty {
+.summary-card__summary--empty {
   font-style: italic;
 }
 

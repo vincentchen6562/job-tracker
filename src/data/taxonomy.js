@@ -3,7 +3,7 @@
 // None of the saved applications carry a category, role type, or location
 // field — the seed data predates them and so does anything already in
 // localStorage. So each facet is *inferred* from the text an application
-// already has: the role title first, then company, notes and markdown detail.
+// already has: the role title first, then company, summary and details.
 // Anything set explicitly on the application overrides the guess, which is
 // what the selects on the detail page write. See resolveFacets.
 
@@ -141,7 +141,7 @@ function firstMatch(rules, text) {
 
 export function deriveCategory(app) {
   const role = haystack(app.role);
-  const everything = haystack(app.role, app.notes, app.detail);
+  const everything = haystack(app.role, app.summary, app.details);
   // Role title is the strongest signal, so try it on its own before letting
   // the body text vote.
   return firstMatch(CATEGORY_RULES, role) ?? firstMatch(CATEGORY_RULES, everything) ?? UNSPECIFIED;
@@ -152,14 +152,14 @@ export function deriveRoleType(app) {
   // A grad programme is often only named in the title, e.g. "(2026 Grad
   // Programme)", so check the bare word there before the stricter rule.
   if (/\bgrad(uate)?s?\b/.test(role)) return 'Graduate programme';
-  const everything = haystack(app.role, app.notes, app.detail);
+  const everything = haystack(app.role, app.summary, app.details);
   return firstMatch(ROLE_TYPE_RULES, role) ?? firstMatch(ROLE_TYPE_RULES, everything) ?? UNSPECIFIED;
 }
 
 // An ad can legitimately name two cities ("Auckland or Christchurch"), so
 // this returns every centre it finds rather than the first.
 export function deriveLocations(app) {
-  const everything = haystack(app.company, app.role, app.notes, app.detail);
+  const everything = haystack(app.company, app.role, app.summary, app.details);
   if (!everything.trim()) return [UNSPECIFIED];
   const found = LOCATION_RULES.filter(([, pattern]) => pattern.test(everything)).map(
     ([label]) => label

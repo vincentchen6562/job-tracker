@@ -26,14 +26,14 @@ export function toMarkdown(applications) {
   lines.push('');
   lines.push('## Application tracker');
   lines.push('');
-  lines.push('| Company | Role | Status | Priority | Date | Job posting | Notes |');
+  lines.push('| Company | Role | Status | Priority | Date | Job posting | Summary |');
   lines.push('|---|---|---|---|---|---|---|');
 
   applications.forEach((app) => {
     const link = app.jobPostingUrl ? `[Link](${app.jobPostingUrl})` : '—';
     const jump = `[Jump to section](#${slug(app.company)})`;
     lines.push(
-      `| ${cell(app.company)} | ${cell(app.role)} | ${cell(app.status)} | ${stars(app.priority)} | ${cell(app.date)} | ${link} | ${cell(app.notes)} ${jump} |`
+      `| ${cell(app.company)} | ${cell(app.role)} | ${cell(app.status)} | ${stars(app.priority)} | ${cell(app.date)} | ${link} | ${cell(app.summary)} ${jump} |`
     );
   });
 
@@ -60,12 +60,12 @@ export function toMarkdown(applications) {
       lines.push(meta.join('  \n'));
       lines.push('');
     }
-    if (app.notes) {
-      lines.push(app.notes);
+    if (app.summary) {
+      lines.push(app.summary);
       lines.push('');
     }
-    if (app.detail) {
-      lines.push(app.detail.trim());
+    if (app.details) {
+      lines.push(app.details.trim());
       lines.push('');
     }
   });
@@ -78,12 +78,13 @@ export function toMarkdown(applications) {
 //
 // v1 backups were a bare array of applications. v2 is an object holding the
 // applications and, from when the tracker had attachments, the files too.
-// Attachments are gone (ADR-0009), so new backups carry applications only
-// and readBackup() ignores any files an older backup holds.
+// v3 has no attachments (ADR-0009) and uses the summary and details field
+// names (ADR-0011). readBackup() accepts all three; convertApplication()
+// brings older applications up to date.
 // ---------------------------------------------------------------------------
 
 export const BACKUP_FORMAT = 'vc-application-tracker';
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 export function toJson(applications) {
   return JSON.stringify(
