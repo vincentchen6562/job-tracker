@@ -10,7 +10,8 @@ export const STATUS_OPTIONS = [
   'Interview',
   'Offer',
   'Rejected',
-  'Refused'
+  'Refused',
+  'No response',
 ];
 
 export const seedApplications = [

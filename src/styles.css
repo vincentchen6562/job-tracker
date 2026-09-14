@@ -18,6 +18,8 @@
   --status-interview: #6b4c9a;
   --status-offer: #2f7a52;
   --status-rejected: #a8362c;
+  --status-refused: #a63d78;
+  --status-no-response: #2b7f8c;
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20, 22, 28, 0.06), 0 8px 24px rgba(20, 22, 28, 0.04);
@@ -47,6 +49,8 @@
   --status-interview: #a98cd8;
   --status-offer: #6cbb90;
   --status-rejected: #e0776b;
+  --status-refused: #e08bbd;
+  --status-no-response: #6cc3cf;
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.25);
 }
@@ -546,6 +550,8 @@ textarea:focus-visible {
 .status--interview { color: var(--status-interview); }
 .status--offer { color: var(--status-offer); }
 .status--rejected { color: var(--status-rejected); }
+.status--refused { color: var(--status-refused); }
+.status--no-response { color: var(--status-no-response); }
 
 .status-select option {
   color: var(--ink);
