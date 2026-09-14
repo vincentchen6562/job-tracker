@@ -1,6 +1,6 @@
 # Remove CV and cover letter attachments
 
-Commit `ecd25d4` added CV and cover letter uploads, stored in the browser's IndexedDB. We remove them before the backend lands: the upload code, the CV / cover letter badges, and attachments in backups. Restore ignores the `cv`, `coverLetter` and `attachments` fields in older backups. Attachments were the most expensive feature in the plan for what they gave. The files already live in the owner's documents, sent email and application portals. And with open sign-up (ADR-0005), storing files means hosting whatever strangers upload on free storage. To point at a file, put a link in an application's Details.
+Commit `7ff3544` added CV and cover letter uploads, stored in the browser's IndexedDB. We remove them before the backend lands: the upload code, the CV / cover letter badges, and attachments in backups. Restore ignores the `cv`, `coverLetter` and `attachments` fields in older backups. Attachments were the most expensive feature in the plan for what they gave. The files already live in the owner's documents, sent email and application portals. And with open sign-up (ADR-0005), storing files means hosting whatever strangers upload on free storage. To point at a file, put a link in an application's Details.
 
 ## Considered Options
 
