@@ -544,6 +544,18 @@ textarea:focus-visible {
   color: var(--status-not-started);
 }
 
+.status-pill {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  color: var(--status-not-started);
+  white-space: nowrap;
+}
+
 .status--not-started { color: var(--status-not-started); }
 .status--in-progress { color: var(--status-in-progress); }
 .status--submitted { color: var(--status-submitted); }
@@ -739,18 +751,6 @@ textarea:focus-visible {
   margin-top: auto;
   padding: 12px 18px 16px 22px;
   border-top: 1px solid var(--line);
-}
-
-.status-pill {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  color: var(--status-not-started);
-  white-space: nowrap;
 }
 
 /* Filter bar --------------------------------------------------------- */
