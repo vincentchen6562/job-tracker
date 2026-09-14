@@ -19,7 +19,7 @@ import {
 } from './utils/storage';
 import { parseTrackerDate } from './utils/date';
 import { toMarkdown, toJson, readBackup, downloadFile } from './utils/exportData';
-import { deleteFiles, putRawFile, clearFiles, pruneOrphans } from './utils/fileStore';
+import { convertApplication } from './utils/convertApplication';
 
 const STATUS_ORDER = STATUS_OPTIONS.reduce((acc, status, index) => {
   acc[status] = index;
@@ -55,15 +55,7 @@ function blankApplication() {
     category: '',
     roleType: '',
     locations: [],
-    // Metadata stubs only — the bytes live in IndexedDB, keyed by .id.
-    cv: null,
-    coverLetter: null,
   };
-}
-
-// Every attachment id a set of records still points at.
-function attachmentIds(applications) {
-  return applications.flatMap((app) => [app.cv?.id, app.coverLetter?.id]).filter(Boolean);
 }
 
 // Every token has to appear somewhere, so "auckland grad" narrows rather
@@ -80,8 +72,6 @@ function matchesQuery(app, facets, tokens) {
     facets.category,
     facets.roleType,
     facets.locations.join(' '),
-    app.cv?.name,
-    app.coverLetter?.name,
   ]
     .filter(Boolean)
     .join(' \n ')
@@ -93,7 +83,7 @@ function matchesQuery(app, facets, tokens) {
 export default function App() {
   const route = useHashRoute();
   const [applications, setApplications] = useState(
-    () => loadApplications() ?? seedApplications
+    () => loadApplications()?.map(convertApplication) ?? seedApplications
   );
   const [sort, setSort] = useState({ key: 'date', direction: 'asc' });
   const [query, setQuery] = useState('');
@@ -123,13 +113,6 @@ export default function App() {
   useEffect(() => {
     saveView(view);
   }, [view]);
-
-  // Blob deletes are fire-and-forget so a storage hiccup never blocks a
-  // record delete; this sweeps up anything they left behind. Once on mount,
-  // against the records as loaded.
-  useEffect(() => {
-    pruneOrphans(attachmentIds(loadApplications() ?? seedApplications)).catch(() => {});
-  }, []);
 
   // Narrowing the list should put you back at the start of it.
   useEffect(() => {
@@ -293,9 +276,6 @@ export default function App() {
     const name = target?.company || 'this application';
     if (!window.confirm(`Remove ${name}? This can't be undone.`)) return;
     setApplications((prev) => prev.filter((app) => app.id !== id));
-    // The record is the only pointer to these blobs; without this they would
-    // sit in IndexedDB forever.
-    deleteFiles([target?.cv?.id, target?.coverLetter?.id]).catch(() => {});
     if (id === pendingId) setPendingId(null);
     setMessage(`Removed ${name}.`);
     if (route.name === 'detail' && route.id === id) {
@@ -340,71 +320,43 @@ export default function App() {
     );
   }
 
-  // Async because the attachment blobs have to be read out of IndexedDB and
-  // base64'd into the file.
-  async function exportJson() {
-    try {
-      const json = await toJson(applications);
-      downloadFile('application-tracker-backup.json', json, 'application/json');
-      const files = attachmentIds(applications).length;
-      setMessage(
-        files > 0
-          ? `Backup downloaded — ${applications.length} applications and ${files} ${files === 1 ? 'file' : 'files'}.`
-          : 'Backup downloaded.'
-      );
-    } catch (error) {
-      setMessage(`Couldn't build the backup — ${error.message}`);
-    }
+  function exportJson() {
+    downloadFile(
+      'application-tracker-backup.json',
+      toJson(applications),
+      'application/json'
+    );
+    setMessage('Backup downloaded.');
   }
 
-  async function importJson(raw) {
+  function importJson(raw) {
     if (!raw) {
       setMessage("Couldn't read that file.");
       return;
     }
 
-    let applicationsIn;
-    let attachmentsIn;
+    let restored;
     try {
-      ({ applications: applicationsIn, attachments: attachmentsIn } = readBackup(raw));
+      restored = readBackup(raw);
     } catch {
       setMessage("That file isn't a tracker backup.");
       return;
     }
 
-    const cleaned = applicationsIn.map((item) => ({
+    // The blank spread is the migration story for fields an older backup
+    // never had.
+    const cleaned = restored.map((item) => ({
       ...blankApplication(),
-      ...item,
+      ...convertApplication(item),
       id: item.id || makeId(),
     }));
-
-    // A restore replaces everything, so the old blobs go with the old
-    // records. Written before the state swap so the records never point at
-    // files that are not there yet.
-    try {
-      await clearFiles();
-      for (const record of attachmentsIn) {
-        await putRawFile(record);
-      }
-    } catch (error) {
-      setMessage(`Restored the records, but the attachments failed — ${error.message}`);
-      setApplications(cleaned);
-      return;
-    }
-
     setApplications(cleaned);
-    const files = attachmentsIn.length;
-    setMessage(
-      files > 0
-        ? `Restored ${cleaned.length} applications and ${files} ${files === 1 ? 'file' : 'files'}.`
-        : `Restored ${cleaned.length} applications.`
-    );
+    setMessage(`Restored ${cleaned.length} applications.`);
   }
 
   function resetToSeed() {
     if (!window.confirm('Replace everything with the original seed data?')) return;
     clearApplications();
-    clearFiles().catch(() => {});
     setApplications(seedApplications);
     clearFilters();
     setMessage('Reset to seed data.');
@@ -479,7 +431,6 @@ export default function App() {
           application={applications.find((app) => app.id === route.id)}
           onUpdate={updateApplication}
           onRemove={removeApplication}
-          onNotice={setMessage}
         />
       ) : (
         <>
