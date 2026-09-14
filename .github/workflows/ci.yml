@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    env:
+      # The tests' in-memory MongoDB downloads its binary here on first use.
+      # Outside node_modules, which npm ci deletes, so the cache survives.
+      MONGOMS_DOWNLOAD_DIR: ${{ github.workspace }}/.mongodb-binaries
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.MONGOMS_DOWNLOAD_DIR }}
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build

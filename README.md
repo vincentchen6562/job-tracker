@@ -5,20 +5,27 @@ scanning and sorting, one card per application underneath for the full notes.
 
 ## Running it
 
-You need Node 18 or newer.
+You need Node 22.12 or newer, and a MongoDB database for the server.
 
 ```bash
 npm install
+cp server/.env.example server/.env   # then fill in MONGODB_URI and SESSION_SECRET
 npm run dev
 ```
 
-Then open the URL it prints (usually http://localhost:5173).
+`npm run dev` starts both the Vite dev server and the Express server. Open the
+URL Vite prints (usually http://localhost:5173); it forwards `/api` to Express.
 
-To produce a static build you can host anywhere:
+```bash
+npm test          # server tests, against an in-memory MongoDB
+npm start         # the server alone; with NODE_ENV=production it also serves client/dist/
+```
+
+To build the client, which the server serves in production:
 
 ```bash
 npm run build     # output lands in client/dist/
-npm run preview   # serve that build locally
+npm run preview   # serve that build locally with Vite
 ```
 
 ## How it works
