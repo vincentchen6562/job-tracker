@@ -1,0 +1,3 @@
+# Server-side sessions, not JWTs
+
+Login state is a session stored in MongoDB (`express-session` + `connect-mongo`), and the browser holds only its random ID in an httpOnly cookie. Many MERN tutorials use JWTs, but this app has one server and one database, so a JWT's advantage (no database lookup per request) gains nothing here. JWTs also can't be revoked before they expire without adding a blocklist, which amounts to a session store anyway. With sessions, logging out actually ends the session. Changing the password ends every other session for the account, and deleting the account ends all of them.
