@@ -61,6 +61,8 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
   // A request still queued when the tracker closes, such as after switching
   // accounts, is refused the same way.
   const unmounted = useRef(false);
+  // A restore on its way, as a promise that never rejects, or null.
+  const restoring = useRef(null);
 
   // Declared before the load, so a remount clears it before loading again.
   useEffect(() => {
@@ -99,16 +101,16 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
   // Every request to the server goes through here. Rejects like a 401
   // without sending while edits are held, so every caller's existing 401
   // handling keeps what didn't go out, and a real 401 starts holding them.
-  function callServer(method, path, body) {
+  function callServer(method, path, body, options) {
     if (held.current || unmounted.current) {
       return Promise.reject(new ApiError(401, 'Not logged in.'));
     }
     const sentAfterLogin = logins.current;
-    return api(method, path, body, { accountId }).catch((error) => {
+    return api(method, path, body, { ...options, accountId }).catch((error) => {
       if (error.kind !== 'unauthenticated') throw error;
       // Sent on the old session and answered after logging back in, so it
       // goes again on the new one.
-      if (sentAfterLogin !== logins.current) return callServer(method, path, body);
+      if (sentAfterLogin !== logins.current) return callServer(method, path, body, options);
       if (!held.current) {
         held.current = true;
         askForLogin();
@@ -119,7 +121,9 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
 
   function refreshStatus() {
     if (failedFields.current.size > 0) setSaveStatus('failed');
-    else if (unsent.current.size > 0 || inFlight.current.size > 0) setSaveStatus('saving');
+    else if (unsent.current.size > 0 || inFlight.current.size > 0 || restoring.current) {
+      setSaveStatus('saving');
+    }
     else setSaveStatus('saved');
   }
 
@@ -136,7 +140,9 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
   // Runs `send` once any earlier request for the same application has
   // settled, and keeps the indicator in step. Resolves or rejects with it.
   function enqueue(id, send) {
-    const previous = inFlight.current.get(id) ?? Promise.resolve();
+    // A restore on its way is waited for too, so nothing lands in the account
+    // after the backup has replaced it.
+    const previous = Promise.all([inFlight.current.get(id), restoring.current]);
     const request = previous.then(send);
     const settled = request
       .catch(() => {})
@@ -290,6 +296,34 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
     else saveEverything();
   }
 
+  // Replaces every application with a backup's, given the file's text as it
+  // was read. Edits waiting to go out are saved first, so they're kept if the
+  // server refuses the backup. Edits made while the restore is on its way go
+  // with the applications it replaces. Resolves with the restored
+  // applications.
+  async function restore(backup) {
+    await saveEverything();
+    const request = callServer('POST', '/restore', backup, { raw: true }).then((restored) => {
+      timers.current.forEach(clearTimeout);
+      timers.current.clear();
+      unsent.current.clear();
+      failedFields.current.clear();
+      onServer.current = new Set(restored.map((application) => application.id));
+      sentPut.current.clear();
+      setApplications(restored);
+      return restored;
+    });
+    const settled = request
+      .catch(() => {})
+      .finally(() => {
+        if (restoring.current === settled) restoring.current = null;
+        refreshStatus();
+      });
+    restoring.current = settled;
+    refreshStatus();
+    return request;
+  }
+
   return {
     applications,
     loadError,
@@ -298,6 +332,7 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
     retry,
     saveEverything,
     resume,
+    restore,
     add,
     update,
     remove,

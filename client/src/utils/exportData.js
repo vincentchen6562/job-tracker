@@ -77,15 +77,13 @@ export function toMarkdown(applications) {
 // ---------------------------------------------------------------------------
 // Backups
 //
-// v1 backups were a bare array of applications. v2 is an object holding the
-// applications and, from when the tracker had attachments, the files too.
-// v3 has no attachments (ADR-0009) and uses the summary and details field
-// names (ADR-0011). readBackup() accepts all three; convertApplication()
-// brings older applications up to date.
+// New backups are version 3: the loaded applications, with no attachments
+// (ADR-0009). Restoring sends the file to the server as it is, and the server
+// reads older versions too.
 // ---------------------------------------------------------------------------
 
-export const BACKUP_FORMAT = 'vc-application-tracker';
-export const BACKUP_VERSION = 3;
+const BACKUP_FORMAT = 'vc-application-tracker';
+const BACKUP_VERSION = 3;
 
 export function toJson(applications) {
   return JSON.stringify(
@@ -98,18 +96,6 @@ export function toJson(applications) {
     null,
     2
   );
-}
-
-// Returns the backup's applications as stored in the file, or throws.
-export function readBackup(raw) {
-  const parsed = JSON.parse(raw);
-  const applications = Array.isArray(parsed) ? parsed : parsed?.applications;
-
-  if (!Array.isArray(applications)) {
-    throw new Error('not a tracker backup');
-  }
-
-  return applications.filter((item) => item && typeof item === 'object');
 }
 
 export function downloadFile(filename, contents, mime) {

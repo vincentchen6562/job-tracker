@@ -56,13 +56,13 @@ applicationSchema.index({ accountId: 1, id: 1 }, { unique: true });
 
 // Looked up per connection, like the account model, since each test file
 // brings its own.
-function applicationModel(db) {
+export function applicationModel(db) {
   return db.models.Application ?? db.model('Application', applicationSchema);
 }
 
 // The application as the browser holds it: its id and its fields, nothing
 // about which account owns it.
-function publicApplication(application) {
+export function publicApplication(application) {
   return Object.fromEntries([
     ['id', application.id],
     ...FIELDS.map((field) => [field, application[field]]),
@@ -70,7 +70,7 @@ function publicApplication(application) {
 }
 
 // The known fields present in a request body. Anything else is dropped.
-function pickFields(body) {
+export function pickFields(body) {
   return Object.fromEntries(
     FIELDS.filter((field) => field in body).map((field) => [field, body[field]]),
   );
@@ -104,8 +104,11 @@ export function createApplicationsRouter(db) {
   router.use(requireLogin);
 
   router.get('/', async (req, res) => {
+    // A restore saves many applications in the same instant, so `_id` breaks
+    // the tie and they keep the backup's order.
     const applications = await Application.find({ accountId: req.session.accountId }).sort({
       createdAt: 1,
+      _id: 1,
     });
     res.json(applications.map(publicApplication));
   });

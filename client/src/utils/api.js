@@ -26,8 +26,9 @@ export class ApiError extends Error {
 
 // Resolves with the response's JSON (null when it has none), or rejects with
 // an ApiError carrying the server's message. Given `accountId`, the server
-// answers 401 if the session has since become another account's.
-export async function api(method, path, body, { accountId } = {}) {
+// answers 401 if the session has since become another account's. Given
+// `raw`, `body` is already JSON text, such as a backup file, and goes as it is.
+export async function api(method, path, body, { accountId, raw = false } = {}) {
   // The server refuses a data-changing request that isn't JSON, so one is
   // always sent, even when there's nothing to say.
   const sendsBody = method !== 'GET';
@@ -41,7 +42,7 @@ export async function api(method, path, body, { accountId } = {}) {
       method,
       credentials: 'same-origin',
       headers,
-      body: sendsBody ? JSON.stringify(body ?? {}) : undefined,
+      body: sendsBody ? (raw ? body : JSON.stringify(body ?? {})) : undefined,
     });
   } catch {
     throw new ApiError(0, "Couldn't reach the server. Check your connection and try again.");

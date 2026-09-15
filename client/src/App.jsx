@@ -4,6 +4,7 @@ import ApplicationSummaryCard from './components/ApplicationSummaryCard';
 import Toolbar from './components/Toolbar';
 import FilterBar from './components/FilterBar';
 import Pagination from './components/Pagination';
+import RestoreBackupButton from './components/RestoreBackupButton';
 import SaveStatus from './components/SaveStatus';
 import SessionEndedDialog from './components/SessionEndedDialog';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
@@ -62,6 +63,7 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
   const route = useHashRoute();
   const [message, setMessage] = useState('');
   const [sessionEnded, setSessionEnded] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const sync = useApplicationsSync({
     accountId: account.id,
     onSaveRejected: (error) => setMessage(`A change wasn't saved. ${error.message}`),
@@ -319,6 +321,38 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
     setMessage('Backup downloaded.');
   }
 
+  // The file goes to the server as it is, and the server works out which
+  // version of backup it is.
+  async function restoreBackup(file) {
+    const confirmed = window.confirm(
+      `Restore ${file.name}? This replaces every application in your account with the ones in the backup, and can't be undone.`
+    );
+    if (!confirmed) return;
+
+    let contents;
+    try {
+      contents = await file.text();
+    } catch {
+      setMessage("Couldn't read that file.");
+      return;
+    }
+
+    setRestoring(true);
+    try {
+      const restored = await sync.restore(contents);
+      // Every restored application should be in view.
+      setPendingId(null);
+      clearFilters();
+      setMessage(
+        `Restored ${restored.length} ${restored.length === 1 ? 'application' : 'applications'}.`
+      );
+    } catch (error) {
+      setMessage(`Couldn't restore the backup, so your applications are unchanged. ${error.message}`);
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   // Edits go out first, since logging out ends the session they're saved
   // with. Stays on the tracker if they can't be saved, or if the server
   // didn't hear the logout while the session is still alive.
@@ -363,11 +397,15 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
         <section className="empty-state">
           <h2 className="empty-state__title">No applications yet</h2>
           <p className="empty-state__text">
-            Add the first job you're going for. It saves to your account as you fill it in.
+            Add your first application, or restore a backup of an earlier tracker. Everything
+            saves to your account.
           </p>
-          <button type="button" className="btn btn--primary" onClick={addApplication}>
-            Add application
-          </button>
+          <div className="empty-state__actions">
+            <button type="button" className="btn btn--primary" onClick={addApplication}>
+              Add application
+            </button>
+            <RestoreBackupButton onRestore={restoreBackup} restoring={restoring} />
+          </div>
         </section>
       );
     }
@@ -473,6 +511,8 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
             onAdd={addApplication}
             onExportMarkdown={exportMarkdown}
             onExportJson={exportJson}
+            onRestore={restoreBackup}
+            restoring={restoring}
             view={view}
             onViewChange={setView}
           />

@@ -328,6 +328,13 @@ body {
   color: var(--ink-soft);
 }
 
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   font-family: var(--font-mono);

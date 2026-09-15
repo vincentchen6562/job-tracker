@@ -4,6 +4,7 @@ import { createApplicationsRouter } from './applications.js';
 import { createAuthRouter } from './auth.js';
 import { handleErrors } from './errors.js';
 import { createRateLimiter, requireJson } from './protections.js';
+import { createRestoreRouter } from './restore.js';
 import { sessionMiddleware } from './sessions.js';
 
 // Builds the Express app without opening a port, so tests can drive it
@@ -35,8 +36,12 @@ export function createApp(config, db) {
   // cheaply as possible.
   app.use('/api', createRateLimiter(config.rateLimits.api));
   app.use(requireJson);
-  app.use(express.json());
   app.use(sessionMiddleware(config, db));
+
+  // Before the body parser: a backup is read with a larger limit of its own.
+  app.use('/api/restore', createRestoreRouter(db));
+
+  app.use(express.json());
 
   app.use('/api/auth', createAuthRouter(config, db));
   app.use('/api/applications', createApplicationsRouter(db));

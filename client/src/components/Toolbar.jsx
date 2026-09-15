@@ -1,6 +1,15 @@
+import RestoreBackupButton from './RestoreBackupButton';
 import ViewToggle from './ViewToggle';
 
-export default function Toolbar({ onAdd, onExportMarkdown, onExportJson, view, onViewChange }) {
+export default function Toolbar({
+  onAdd,
+  onExportMarkdown,
+  onExportJson,
+  onRestore,
+  restoring,
+  view,
+  onViewChange,
+}) {
   return (
     <div className="toolbar">
       <div className="toolbar__group">
@@ -17,6 +26,7 @@ export default function Toolbar({ onAdd, onExportMarkdown, onExportJson, view, o
         <button type="button" className="btn" onClick={onExportJson}>
           Download backup
         </button>
+        <RestoreBackupButton onRestore={onRestore} restoring={restoring} />
       </div>
     </div>
   );
