@@ -1,11 +1,13 @@
-// Minimal hash-based router. No dependency needed for two routes, and hash
-// links keep working when the built app is opened straight from disk or
-// hosted under a sub-path (see vite.config.js base: './').
+// Minimal hash-based router. No dependency needed for a handful of routes,
+// and hash links keep working when the built app is opened straight from disk
+// or hosted under a sub-path (see vite.config.js base: './').
 
 import { useEffect, useState } from 'react';
 
 function parseHash() {
   const hash = window.location.hash.replace(/^#/, '') || '/';
+  if (hash === '/login') return { name: 'login' };
+  if (hash === '/signup') return { name: 'signup' };
   const match = hash.match(/^\/app\/(.+)$/);
   if (match) return { name: 'detail', id: decodeURIComponent(match[1]) };
   return { name: 'home' };

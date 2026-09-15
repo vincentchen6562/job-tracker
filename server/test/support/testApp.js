@@ -2,12 +2,19 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, inject } from 'vitest';
 import { connectDatabase } from '../../src/database.js';
 import { createApp } from '../../src/app.js';
+import { FIFTEEN_MINUTES_MS } from './http.js';
 
 const testConfig = {
   mongodbUri: 'unused: tests are handed a connection',
   sessionSecret: 'test-session-secret',
   nodeEnv: 'test',
   port: 0,
+  // Every request in a test comes from the same IP, so real limits would trip
+  // on ordinary tests. Tests of the limits pass their own small ones.
+  rateLimits: {
+    auth: { limit: 1000, windowMs: FIFTEEN_MINUTES_MS },
+    api: { limit: 1000, windowMs: FIFTEEN_MINUTES_MS },
+  },
 };
 
 // Gives the calling test file its own empty database, dropped once the file

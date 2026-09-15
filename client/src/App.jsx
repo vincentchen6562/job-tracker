@@ -67,7 +67,7 @@ function matchesQuery(app, facets, tokens) {
   return tokens.every((token) => haystack.includes(token));
 }
 
-export default function App() {
+export default function App({ account, onLogout }) {
   const route = useHashRoute();
   const [applications, setApplications] = useState(
     () => loadApplications()?.map(convertApplication) ?? seedApplications
@@ -349,6 +349,12 @@ export default function App() {
     setMessage('Reset to seed data.');
   }
 
+  // Stays on the tracker if the server didn't hear it, rather than showing
+  // the login screen while the session is still alive.
+  function logOut() {
+    onLogout().catch((error) => setMessage(`Couldn't log out. ${error.message}`));
+  }
+
   return (
     <div className="page">
       <header className="masthead">
@@ -360,15 +366,23 @@ export default function App() {
           Everything saves to this browser automatically. Download a backup before
           switching machines.
         </p>
-        <button
-          type="button"
-          className="btn btn--icon masthead__theme"
-          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {theme === 'dark' ? '☀' : '☾'}
-        </button>
+        <div className="masthead__actions">
+          <span className="masthead__account" title="Logged in as">
+            {account.email}
+          </span>
+          <button type="button" className="btn btn--quiet" onClick={logOut}>
+            Log out
+          </button>
+          <button
+            type="button"
+            className="btn btn--icon masthead__theme"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? '☀' : '☾'}
+          </button>
+        </div>
       </header>
 
       {saveFailed && (

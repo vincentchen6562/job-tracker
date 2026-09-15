@@ -52,4 +52,16 @@ describe('starting the server', () => {
     expect(result.stderr).toContain('MONGODB_URI');
     expect(result.stderr).not.toContain('SESSION_SECRET');
   });
+
+  // Rate limits are optional, but a typo in one mustn't quietly break it.
+  it('fails, naming it, when a rate limit setting is not a positive number', async () => {
+    const result = await startServer({
+      MONGODB_URI: 'mongodb://127.0.0.1:1/unused',
+      SESSION_SECRET: 'a-secret',
+      RATE_LIMIT_AUTH_MAX: 'ten',
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('RATE_LIMIT_AUTH_MAX');
+  });
 });
