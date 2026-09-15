@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Tracker — Vincent Chen</title>
+    <meta name="description" content="A tracker for a graduate job search. This page wakes the server, then opens the tracker." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* The tracker's palette and fonts, from client/src/styles.css. */
+      :root {
+        --bg: #f7f7f4;
+        --surface: #ffffff;
+        --ink: #16181d;
+        --ink-soft: #5b6270;
+        --line: #dedfd9;
+        --accent: #2f5d8a;
+        --accent-soft: #e6eef6;
+        --gold: #b07d1f;
+        --radius: 10px;
+        --shadow: 0 1px 2px rgba(20, 22, 28, 0.06), 0 8px 24px rgba(20, 22, 28, 0.04);
+        --font-display: 'Space Grotesk', system-ui, sans-serif;
+        --font-body: 'Inter', system-ui, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121317;
+          --surface: #1a1c22;
+          --ink: #e9eaee;
+          --ink-soft: #9ba1ad;
+          --line: #2c2f39;
+          --accent: #7fa9dd;
+          --accent-soft: #1f2a38;
+          --gold: #d9a94e;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px 16px;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      main {
+        width: 100%;
+        max-width: 440px;
+        padding: 32px 28px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--ink-soft);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 24px;
+        font-family: var(--font-display);
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 8px;
+        font-family: var(--font-display);
+        font-size: 17px;
+        font-weight: 500;
+      }
+
+      .spinner {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--accent-soft);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+
+      [data-stage='slow'] .spinner,
+      [data-stage='stuck'] .spinner {
+        border-top-color: var(--gold);
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation-duration: 3s;
+        }
+      }
+
+      .detail {
+        margin: 0 0 20px;
+        color: var(--ink-soft);
+      }
+
+      .footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+      }
+
+      .elapsed {
+        color: var(--ink-soft);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      a {
+        color: var(--accent);
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="front-door" data-stage="waking">
+      <p class="eyebrow">Vincent Chen</p>
+      <h1>Application Tracker</h1>
+
+      <div role="status" aria-live="polite">
+        <p class="status">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="message">Waking the server…</span>
+        </p>
+        <p class="detail" id="detail">
+          The tracker runs on a free server that sleeps when nobody is using it. Waking it usually
+          takes about a minute, and this page opens the tracker as soon as it's ready.
+        </p>
+      </div>
+
+      <noscript>
+        <p class="detail">This page needs JavaScript to wake the server. You can open the tracker directly instead.</p>
+      </noscript>
+
+      <div class="footer">
+        <span class="elapsed" id="elapsed"></span>
+        <a id="direct" href="https://job-tracker-uhda.onrender.com/">Open the tracker directly</a>
+      </div>
+    </main>
+
+    <script>
+      // The permanent public link to the tracker. The tracker itself runs on a
+      // Render free web service, which sleeps after 15 minutes without requests
+      // and takes about a minute to wake (ADR-0010). This page polls its health
+      // endpoint until the server answers, then sends the visitor on. If the
+      // host ever changes, only TRACKER_URL does.
+      const TRACKER_URL = 'https://job-tracker-uhda.onrender.com/';
+      const HEALTH_URL = new URL('api/health', TRACKER_URL);
+
+      const RETRY_DELAY_MS = 3_000;
+      const REQUEST_TIMEOUT_MS = 15_000;
+      // Waking normally takes about a minute; past these, say so.
+      const SLOW_AFTER_MS = 75_000;
+      const STUCK_AFTER_MS = 180_000;
+
+      const STAGES = {
+        waking: {
+          message: 'Waking the server…',
+          detail:
+            "The tracker runs on a free server that sleeps when nobody is using it. Waking it usually takes about a minute, and this page opens the tracker as soon as it's ready.",
+        },
+        slow: {
+          message: 'Still starting…',
+          detail:
+            "The server is taking longer than usual to start, but it's on its way. This page keeps trying and opens the tracker once it's ready.",
+        },
+        stuck: {
+          message: 'Still waiting for the server',
+          detail:
+            'It is taking much longer than expected, so the server may be restarting or down. This page keeps trying, or you can open the tracker directly.',
+        },
+      };
+
+      const frontDoor = document.getElementById('front-door');
+      const message = document.getElementById('message');
+      const detail = document.getElementById('detail');
+      const elapsed = document.getElementById('elapsed');
+      const startedAt = Date.now();
+
+      function showStage(name) {
+        if (frontDoor.dataset.stage === name) return;
+        frontDoor.dataset.stage = name;
+        message.textContent = STAGES[name].message;
+        detail.textContent = STAGES[name].detail;
+      }
+
+      function showProgress() {
+        const waited = Date.now() - startedAt;
+        elapsed.textContent = `Waiting ${Math.floor(waited / 1000)}s`;
+        if (waited >= STUCK_AFTER_MS) showStage('stuck');
+        else if (waited >= SLOW_AFTER_MS) showStage('slow');
+      }
+
+      // A sleeping or starting server either holds the request open or answers
+      // with an error page, so anything but the health response means not yet.
+      async function isAwake() {
+        try {
+          const response = await fetch(HEALTH_URL, {
+            cache: 'no-store',
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+          });
+          if (!response.ok) return false;
+          const body = await response.json();
+          return body.status === 'ok';
+        } catch {
+          return false;
+        }
+      }
+
+      async function wake() {
+        while (!(await isAwake())) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+        clearInterval(progressTimer);
+        message.textContent = 'Opening the tracker…';
+        // Replace rather than push, so Back doesn't return to this page.
+        location.replace(TRACKER_URL);
+      }
+
+      const progressTimer = setInterval(showProgress, 1_000);
+      wake();
+    </script>
+  </body>
+</html>

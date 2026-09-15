@@ -3,6 +3,17 @@
 A small React app for tracking graduate job applications. Table on top for
 scanning and sorting, one card per application underneath for the full notes.
 
+## Public link
+
+**https://vincentchen6562.github.io/job-tracker/** is the link to share, on CVs
+and the portfolio. It's the front door page in `frontdoor/`, published to GitHub
+Pages by `.github/workflows/frontdoor.yml`. The tracker runs on a Render free web
+service that sleeps when idle (ADR-0010), so the front door shows "Waking the
+server…", polls `/api/health`, and opens the tracker at
+https://job-tracker-uhda.onrender.com/ once it answers. If the host ever
+changes, update `TRACKER_URL` in `frontdoor/index.html` and the link stays the
+same.
+
 ## Running it
 
 You need Node 22.12 or newer, and a MongoDB database for the server.
