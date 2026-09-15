@@ -90,4 +90,3 @@ src/
 also add a matching `--status-*` colour variable and `.status--*` rule in
 `styles.css` — the slug is the lowercased name with spaces replaced by hyphens,
 so "In progress" becomes `.status--in-progress`.
-
