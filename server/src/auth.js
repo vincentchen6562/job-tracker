@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import express from 'express';
-import { PASSWORD_MAX, PASSWORD_MIN } from '@job-tracker/shared';
+import { ACCOUNT_HEADER, PASSWORD_MAX, PASSWORD_MIN } from '@job-tracker/shared';
 import { accountModel, publicAccount } from './accounts.js';
 import { createRateLimiter } from './protections.js';
 import { SESSION_COOKIE } from './sessions.js';
@@ -44,9 +44,16 @@ function startSession(req, account) {
 }
 
 // Guards routes that act on an account's data. Account deletion ends every
-// session, so a session holding an account ID is enough to go on.
+// session, so a session holding an account ID is enough to go on. A request
+// naming another account comes from a page showing that one, after another
+// tab logged in to this one, so acting on it would put its edits in the wrong
+// account.
 export function requireLogin(req, res, next) {
   if (!req.session.accountId) return res.status(401).json({ error: 'Not logged in.' });
+  const named = req.get(ACCOUNT_HEADER);
+  if (named && named !== req.session.accountId) {
+    return res.status(401).json({ error: 'Logged in as a different account.' });
+  }
   next();
 }
 

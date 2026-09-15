@@ -5,6 +5,7 @@ import Toolbar from './components/Toolbar';
 import FilterBar from './components/FilterBar';
 import Pagination from './components/Pagination';
 import SaveStatus from './components/SaveStatus';
+import SessionEndedDialog from './components/SessionEndedDialog';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useApplicationsSync } from './hooks/useApplicationsSync';
@@ -55,11 +56,16 @@ function matchesQuery(app, facets, tokens) {
   return tokens.every((token) => haystack.includes(token));
 }
 
-export default function App({ account, onLogout }) {
+// `notice` is a message that stays until dismissed, for something the account
+// holder mustn't miss.
+export default function App({ account, onLogout, onSwitchAccount, notice, onDismissNotice }) {
   const route = useHashRoute();
   const [message, setMessage] = useState('');
+  const [sessionEnded, setSessionEnded] = useState(false);
   const sync = useApplicationsSync({
+    accountId: account.id,
     onSaveRejected: (error) => setMessage(`A change wasn't saved. ${error.message}`),
+    onSessionEnded: () => setSessionEnded(true),
   });
   const loading = sync.applications === null;
   const applications = sync.applications ?? NO_APPLICATIONS;
@@ -90,6 +96,19 @@ export default function App({ account, onLogout }) {
   useEffect(() => {
     setPage(1);
   }, [query, filters]);
+
+  // The browser's leave-site warning, while closing the tab would lose edits.
+  const unsaved = sync.saveStatus !== 'saved';
+  useEffect(() => {
+    if (!unsaved) return undefined;
+    function warn(event) {
+      event.preventDefault();
+      // Older browsers only warn when this is set.
+      event.returnValue = '';
+    }
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [unsaved]);
 
   useEffect(() => {
     if (!message) return undefined;
@@ -311,6 +330,17 @@ export default function App({ account, onLogout }) {
     onLogout().catch((error) => setMessage(`Couldn't log out. ${error.message}`));
   }
 
+  // Held edits only go to the account they were made in. Another account
+  // gets a fresh tracker, and these edits go with this one.
+  function logBackIn(loggedIn) {
+    if (loggedIn.id !== account.id) {
+      onSwitchAccount(loggedIn, { discardedEdits: unsaved });
+      return;
+    }
+    setSessionEnded(false);
+    sync.resume();
+  }
+
   function renderMain() {
     if (loading) {
       return sync.loadError ? null : (
@@ -419,6 +449,15 @@ export default function App({ account, onLogout }) {
         </div>
       </header>
 
+      {notice && (
+        <div className="flash flash--warn" role="alert">
+          <span>{notice}</span>
+          <button type="button" className="btn" onClick={onDismissNotice}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {sync.loadError && (
         <div className="flash flash--warn" role="alert">
           <span>Couldn't load your applications. {sync.loadError.message}</span>
@@ -457,6 +496,13 @@ export default function App({ account, onLogout }) {
       )}
 
       {renderMain()}
+
+      <SessionEndedDialog
+        open={sessionEnded}
+        email={account.email}
+        onLoggedIn={logBackIn}
+        onClose={() => setSessionEnded(false)}
+      />
     </div>
   );
 }

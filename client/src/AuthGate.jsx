@@ -15,6 +15,7 @@ export default function AuthGate() {
   const [account, setAccount] = useState(undefined);
   const [checkError, setCheckError] = useState(null);
   const [attempt, setAttempt] = useState(0);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +44,22 @@ export default function AuthGate() {
 
   async function logOut() {
     await api('POST', '/auth/logout');
+    setNotice('');
     setAccount(null);
+  }
+
+  // Logging in to another account after the session ended. The tracker is
+  // keyed by account, so the old one closes with its held edits and they're
+  // never saved to this account.
+  function switchAccount(next, { discardedEdits }) {
+    setNotice(
+      discardedEdits
+        ? `You're now logged in as ${next.email}. Edits that hadn't been saved to ${account.email} were discarded.`
+        : '',
+    );
+    setAccount(next);
+    // An open application belonged to the old account.
+    window.location.replace('#/');
   }
 
   if (checkError) {
@@ -74,5 +90,14 @@ export default function AuthGate() {
     ) : null;
   }
 
-  return onAuthRoute ? null : <App account={account} onLogout={logOut} />;
+  return onAuthRoute ? null : (
+    <App
+      key={account.id}
+      account={account}
+      onLogout={logOut}
+      onSwitchAccount={switchAccount}
+      notice={notice}
+      onDismissNotice={() => setNotice('')}
+    />
+  );
 }

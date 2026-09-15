@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import { ACCOUNT_HEADER } from '@job-tracker/shared';
 import { loggedInBrowser, signedUpBrowser } from './support/http.js';
 import { useTestApp } from './support/testApp.js';
 
@@ -21,6 +22,40 @@ describe('without logging in', () => {
     const response = await send(context.app);
 
     expect(response.status).toBe(401);
+  });
+});
+
+// The page names the account it's showing. Another tab in the same browser
+// can log in to a different account, and its cookie then goes with this
+// page's requests too.
+describe('naming the account a request is for', () => {
+  it('refuses with 401, saving nothing, when another account is logged in', async () => {
+    const shown = await signedUpBrowser(context.app, 'shown-account@example.com');
+    const shownId = (await shown.get('/api/auth/me')).body.id;
+    const other = await signedUpBrowser(context.app, 'other-tab-account@example.com');
+
+    const put = await other
+      .put('/api/applications/kowhai-labs')
+      .set(ACCOUNT_HEADER, shownId)
+      .send({ company: 'Kōwhai Labs' });
+    expect(put.status).toBe(401);
+
+    const list = await other.get('/api/applications');
+    expect(list.body).toEqual([]);
+  });
+
+  it('saves as usual when it names the logged-in account', async () => {
+    const browser = await signedUpBrowser(context.app, 'named-account@example.com');
+    const accountId = (await browser.get('/api/auth/me')).body.id;
+
+    const put = await browser
+      .put('/api/applications/tui-robotics')
+      .set(ACCOUNT_HEADER, accountId)
+      .send({ company: 'Tūī Robotics' });
+    expect(put.status).toBe(200);
+
+    const list = await browser.get('/api/applications').set(ACCOUNT_HEADER, accountId);
+    expect(list.body).toEqual([expect.objectContaining({ company: 'Tūī Robotics' })]);
   });
 });
 

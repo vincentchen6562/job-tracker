@@ -3,4 +3,4 @@
 
 export { STATUS_OPTIONS } from './statuses.js';
 export { PRIORITY_MIN, PRIORITY_MAX, applicationDefaults } from './application.js';
-export { PASSWORD_MIN, PASSWORD_MAX } from './account.js';
+export { PASSWORD_MIN, PASSWORD_MAX, ACCOUNT_HEADER } from './account.js';

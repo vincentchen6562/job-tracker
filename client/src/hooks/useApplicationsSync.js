@@ -6,9 +6,11 @@
 // - its first save is a PUT that creates it, so one that is added and never
 //   typed into leaves nothing behind (ADR-0007);
 // - deletes go out immediately.
+// Once a request finds the session has ended, nothing more goes out and edits
+// are held until `resume()`, after logging back in to the same account.
 
 import { useEffect, useRef, useState } from 'react';
-import { api } from '../utils/api';
+import { ApiError, api } from '../utils/api';
 
 const SAVE_DELAY_MS = 600;
 
@@ -18,7 +20,12 @@ function applicationPath(id) {
 
 // `onSaveRejected(error)` is told when the server refuses a change outright,
 // such as an invalid value, which sending again can't fix.
-export function useApplicationsSync({ onSaveRejected } = {}) {
+// `onSessionEnded()` is told when the server says the session is over (it
+// expired, or was ended elsewhere), and again whenever a held save is asked
+// for.
+// `accountId` is the account the edits belong to, and every request names
+// it, so none is ever saved to another account logged in from another tab.
+export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded }) {
   // null until the first load finishes.
   const [applications, setApplications] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -40,15 +47,33 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
   // Applications a PUT has gone out for, whether or not its answer arrived.
   // Any of these may be on the server, so deleting one has to tell it.
   const sentPut = useRef(new Set());
-  // The latest list and callback, for requests that settle after the render
+  // The latest list and callbacks, for requests that settle after the render
   // that started them.
-  const latest = useRef({ applications, onSaveRejected });
-  latest.current = { applications, onSaveRejected };
+  const latest = useRef({ applications, onSaveRejected, onSessionEnded });
+  latest.current = { applications, onSaveRejected, onSessionEnded };
+  // True from the session ending until resume(). Requests are refused here
+  // rather than sent, since a cookie from someone logging in to another
+  // account on this page would go with them.
+  const held = useRef(false);
+  // Counts resume()s, so a 401 for a request sent before logging back in
+  // isn't mistaken for the new session ending.
+  const logins = useRef(0);
+  // A request still queued when the tracker closes, such as after switching
+  // accounts, is refused the same way.
+  const unmounted = useRef(false);
+
+  // Declared before the load, so a remount clears it before loading again.
+  useEffect(() => {
+    unmounted.current = false;
+    return () => {
+      unmounted.current = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoadError(null);
-    api('GET', '/applications')
+    callServer('GET', '/applications')
       .then((loaded) => {
         if (cancelled) return;
         onServer.current = new Set(loaded.map((application) => application.id));
@@ -66,6 +91,31 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
+
+  function askForLogin() {
+    latest.current.onSessionEnded?.();
+  }
+
+  // Every request to the server goes through here. Rejects like a 401
+  // without sending while edits are held, so every caller's existing 401
+  // handling keeps what didn't go out, and a real 401 starts holding them.
+  function callServer(method, path, body) {
+    if (held.current || unmounted.current) {
+      return Promise.reject(new ApiError(401, 'Not logged in.'));
+    }
+    const sentAfterLogin = logins.current;
+    return api(method, path, body, { accountId }).catch((error) => {
+      if (error.kind !== 'unauthenticated') throw error;
+      // Sent on the old session and answered after logging back in, so it
+      // goes again on the new one.
+      if (sentAfterLogin !== logins.current) return callServer(method, path, body);
+      if (!held.current) {
+        held.current = true;
+        askForLogin();
+      }
+      throw error;
+    });
+  }
 
   function refreshStatus() {
     if (failedFields.current.size > 0) setSaveStatus('failed');
@@ -115,7 +165,7 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
       const method = onServer.current.has(id) ? 'PATCH' : 'PUT';
       if (method === 'PUT') sentPut.current.add(id);
 
-      return api(method, applicationPath(id), fields).then(
+      return callServer(method, applicationPath(id), fields).then(
         () => {
           onServer.current.add(id);
         },
@@ -180,13 +230,16 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
       // Checked once any save still on its way has settled.
       if (!onServer.current.has(id) && !sentPut.current.has(id)) return undefined;
 
-      return api('DELETE', applicationPath(id)).then(
+      return callServer('DELETE', applicationPath(id)).then(
         () => forget(id),
         (error) => {
           if (error.kind === 'not-found') {
             forget(id);
             return;
           }
+          // Deleting is asked for by hand, so it asks for a login even when
+          // the dialog was closed.
+          if (error.kind === 'unauthenticated') askForLogin();
           if (removed) {
             setApplications((previous) => [removed, ...previous]);
             if (Object.keys(unsaved).length > 0) failedFields.current.set(id, unsaved);
@@ -197,9 +250,23 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
     });
   }
 
-  // Sends every failed save again straight away.
+  // Sends every failed save again straight away, or asks for a login first
+  // when they're held.
   function retry() {
+    if (held.current) {
+      askForLogin();
+      return;
+    }
     [...failedFields.current.keys()].forEach(save);
+  }
+
+  // Loads the list again, or asks for a login first when the session is over.
+  function reload() {
+    if (held.current) {
+      askForLogin();
+      return;
+    }
+    setLoadAttempt((count) => count + 1);
   }
 
   // Sends everything waiting now and resolves once every request has
@@ -208,16 +275,29 @@ export function useApplicationsSync({ onSaveRejected } = {}) {
   async function saveEverything() {
     new Set([...unsent.current.keys(), ...failedFields.current.keys()]).forEach(save);
     await Promise.all(inFlight.current.values());
-    return unsent.current.size === 0 && failedFields.current.size === 0;
+    const allSaved = unsent.current.size === 0 && failedFields.current.size === 0;
+    if (!allSaved && held.current) askForLogin();
+    return allSaved;
+  }
+
+  // Picks up after logging back in to the same account: the held edits go
+  // out, or the load runs again if it was the load that found the session
+  // over.
+  function resume() {
+    held.current = false;
+    logins.current += 1;
+    if (latest.current.applications === null) reload();
+    else saveEverything();
   }
 
   return {
     applications,
     loadError,
-    reload: () => setLoadAttempt((count) => count + 1),
+    reload,
     saveStatus,
     retry,
     saveEverything,
+    resume,
     add,
     update,
     remove,
