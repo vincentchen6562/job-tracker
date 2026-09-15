@@ -11,6 +11,8 @@
   --gold: #b07d1f;
   --danger: #a8362c;
   --danger-soft: #f7e6e3;
+  --success: #2f7a52;
+  --success-soft: #e5f2ea;
 
   --status-not-started: #8b8f96;
   --status-in-progress: #b07d1f;
@@ -42,6 +44,8 @@
   --gold: #d9a94e;
   --danger: #e0776b;
   --danger-soft: #33211f;
+  --success: #6cbb90;
+  --success-soft: #1d2c24;
 
   --status-not-started: #8b8f96;
   --status-in-progress: #d9a94e;
@@ -196,23 +200,79 @@ body {
 
 /* Save indicator ------------------------------------------------------ */
 
+/* A tinted badge per state, so it reads at a glance. The minimum width keeps
+   the account and log out controls beside it from shifting as it flips
+   between Saving… and Saved. */
 .save-status {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--ink-soft);
+  min-width: 6.75rem;
+  padding: 4px 12px 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 500;
   white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.save-status--saving {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.save-status--saved {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success) 25%, transparent);
 }
 
 .save-status--failed {
+  padding-right: 4px;
   color: var(--danger);
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.save-status__icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.save-status__track {
+  opacity: 0.25;
+}
+
+.save-status__spinner {
+  animation: save-status-spin 0.9s linear infinite;
+}
+
+@keyframes save-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .save-status__spinner {
+    animation: none;
+  }
 }
 
 .save-status__retry {
-  padding: 3px 8px;
-  font-size: 12px;
+  margin-left: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
 }
 
 /* Empty account -------------------------------------------------------- */
