@@ -4,23 +4,15 @@ import ApplicationSummaryCard from './components/ApplicationSummaryCard';
 import Toolbar from './components/Toolbar';
 import FilterBar from './components/FilterBar';
 import Pagination from './components/Pagination';
+import SaveStatus from './components/SaveStatus';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
+import { useApplicationsSync } from './hooks/useApplicationsSync';
 import { STATUS_OPTIONS, applicationDefaults } from '@job-tracker/shared';
-import { seedApplications } from './data/seedData';
 import { resolveFacets } from './data/taxonomy';
-import {
-  loadApplications,
-  saveApplications,
-  clearApplications,
-  loadTheme,
-  saveTheme,
-  loadView,
-  saveView,
-} from './utils/storage';
+import { loadTheme, saveTheme, loadView, saveView } from './utils/storage';
 import { parseTrackerDate } from './utils/date';
-import { toMarkdown, toJson, readBackup, downloadFile } from './utils/exportData';
-import { convertApplication } from './utils/convertApplication';
+import { toMarkdown, toJson, downloadFile } from './utils/exportData';
 
 const STATUS_ORDER = STATUS_OPTIONS.reduce((acc, status, index) => {
   acc[status] = index;
@@ -37,13 +29,9 @@ const NO_FILTERS = {
   priority: 'all',
 };
 
-function makeId() {
-  return `app-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function blankApplication() {
-  return { id: makeId(), ...applicationDefaults() };
-}
+// Stands in while the account's applications load, so everything derived
+// from the list below always has one to work on.
+const NO_APPLICATIONS = [];
 
 // Every token has to appear somewhere, so "auckland grad" narrows rather
 // than widens.
@@ -69,9 +57,12 @@ function matchesQuery(app, facets, tokens) {
 
 export default function App({ account, onLogout }) {
   const route = useHashRoute();
-  const [applications, setApplications] = useState(
-    () => loadApplications()?.map(convertApplication) ?? seedApplications
-  );
+  const [message, setMessage] = useState('');
+  const sync = useApplicationsSync({
+    onSaveRejected: (error) => setMessage(`A change wasn't saved. ${error.message}`),
+  });
+  const loading = sync.applications === null;
+  const applications = sync.applications ?? NO_APPLICATIONS;
   const [sort, setSort] = useState({ key: 'date', direction: 'asc' });
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(NO_FILTERS);
@@ -84,13 +75,7 @@ export default function App({ account, onLogout }) {
   const [pendingId, setPendingId] = useState(null);
   const visitedPendingDetail = useRef(false);
   const [theme, setTheme] = useState(() => loadTheme() ?? 'light');
-  const [message, setMessage] = useState('');
-  const [saveFailed, setSaveFailed] = useState(false);
   const cardRefs = useRef({});
-
-  useEffect(() => {
-    setSaveFailed(!saveApplications(applications));
-  }, [applications]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -198,6 +183,9 @@ export default function App({ account, onLogout }) {
     ? 'Nothing matches the current search and filters.'
     : 'No applications yet. Use “Add application” to start one.';
 
+  // A new account has nothing to search, filter or page through yet.
+  const accountIsEmpty = !loading && applications.length === 0;
+
   const pageSize = PAGE_SIZE[view];
   const pageCount = Math.max(1, Math.ceil(ordered.length / pageSize));
   // Deleting or filtering can strand you past the end; clamp on the way out
@@ -252,22 +240,18 @@ export default function App({ account, onLogout }) {
     }
   }, [route, pendingId]);
 
-  function updateApplication(id, patch) {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, ...patch } : app))
-    );
-  }
-
   function removeApplication(id) {
     const target = applications.find((app) => app.id === id);
     const name = target?.company || 'this application';
     if (!window.confirm(`Remove ${name}? This can't be undone.`)) return;
-    setApplications((prev) => prev.filter((app) => app.id !== id));
     if (id === pendingId) setPendingId(null);
     setMessage(`Removed ${name}.`);
     if (route.name === 'detail' && route.id === id) {
       window.location.hash = '#/';
     }
+    sync
+      .remove(id)
+      .catch(() => setMessage(`Couldn't remove ${name}, so it's back in the list. Try again.`));
   }
 
   function clearFilters() {
@@ -276,8 +260,8 @@ export default function App({ account, onLogout }) {
   }
 
   function addApplication() {
-    const created = blankApplication();
-    setApplications((prev) => [created, ...prev]);
+    const created = { id: crypto.randomUUID(), ...applicationDefaults() };
+    sync.add(created);
     // Held at the end of the list rather than dropped into its sorted place,
     // which would move it out from under the cursor mid-edit.
     setPendingId(created.id);
@@ -316,43 +300,92 @@ export default function App({ account, onLogout }) {
     setMessage('Backup downloaded.');
   }
 
-  function importJson(raw) {
-    if (!raw) {
-      setMessage("Couldn't read that file.");
+  // Edits go out first, since logging out ends the session they're saved
+  // with. Stays on the tracker if they can't be saved, or if the server
+  // didn't hear the logout while the session is still alive.
+  async function logOut() {
+    if (!(await sync.saveEverything())) {
+      setMessage("Some edits couldn't be saved, so you're still logged in. Retry, then log out.");
       return;
     }
-
-    let restored;
-    try {
-      restored = readBackup(raw);
-    } catch {
-      setMessage("That file isn't a tracker backup.");
-      return;
-    }
-
-    // The blank spread is the migration story for fields an older backup
-    // never had.
-    const cleaned = restored.map((item) => ({
-      ...blankApplication(),
-      ...convertApplication(item),
-      id: item.id || makeId(),
-    }));
-    setApplications(cleaned);
-    setMessage(`Restored ${cleaned.length} applications.`);
-  }
-
-  function resetToSeed() {
-    if (!window.confirm('Replace everything with the original seed data?')) return;
-    clearApplications();
-    setApplications(seedApplications);
-    clearFilters();
-    setMessage('Reset to seed data.');
-  }
-
-  // Stays on the tracker if the server didn't hear it, rather than showing
-  // the login screen while the session is still alive.
-  function logOut() {
     onLogout().catch((error) => setMessage(`Couldn't log out. ${error.message}`));
+  }
+
+  function renderMain() {
+    if (loading) {
+      return sync.loadError ? null : (
+        <p className="cards__empty">Loading your applications…</p>
+      );
+    }
+
+    if (route.name === 'detail') {
+      return (
+        <ApplicationDetailPage
+          application={applications.find((app) => app.id === route.id)}
+          onUpdate={sync.update}
+          onRemove={removeApplication}
+        />
+      );
+    }
+
+    if (accountIsEmpty) {
+      return (
+        <section className="empty-state">
+          <h2 className="empty-state__title">No applications yet</h2>
+          <p className="empty-state__text">
+            Add the first job you're going for. It saves to your account as you fill it in.
+          </p>
+          <button type="button" className="btn btn--primary" onClick={addApplication}>
+            Add application
+          </button>
+        </section>
+      );
+    }
+
+    return (
+      <>
+        {view === 'table' ? (
+          <TrackerTable
+            applications={visible}
+            sort={sort}
+            onSortChange={setSort}
+            onUpdate={sync.update}
+            onRemove={removeApplication}
+            emptyMessage={emptyMessage}
+            fillTo={fillTo}
+            pendingId={pendingId}
+            onCommitPending={commitPending}
+          />
+        ) : visible.length === 0 ? (
+          <p className="cards__empty">{emptyMessage}</p>
+        ) : (
+          <section className="cards" aria-label="Applications">
+            {visible.map((app) => (
+              <ApplicationSummaryCard
+                key={app.id}
+                app={app}
+                facets={facetsById.get(app.id)}
+                pending={app.id === pendingId}
+                onRemove={removeApplication}
+                registerRef={registerRef}
+              />
+            ))}
+
+            {Array.from({ length: fillerCards }, (_, index) => (
+              <div key={`filler-${index}`} className="cards__filler" aria-hidden="true" />
+            ))}
+          </section>
+        )}
+
+        <Pagination
+          page={safePage}
+          pageCount={pageCount}
+          total={ordered.length}
+          pageSize={pageSize}
+          onChange={setPage}
+        />
+      </>
+    );
   }
 
   return (
@@ -363,10 +396,11 @@ export default function App({ account, onLogout }) {
           <h1>Application tracker</h1>
         </div>
         <p className="masthead__note">
-          Everything saves to this browser automatically. Download a backup before
-          switching machines.
+          Edits save to your account as you go, so the tracker is the same on every
+          device you log in to.
         </p>
         <div className="masthead__actions">
+          <SaveStatus status={sync.saveStatus} onRetry={sync.retry} />
           <span className="masthead__account" title="Logged in as">
             {account.email}
           </span>
@@ -385,26 +419,21 @@ export default function App({ account, onLogout }) {
         </div>
       </header>
 
-      {saveFailed && (
+      {sync.loadError && (
         <div className="flash flash--warn" role="alert">
-          <span>
-            Couldn't save to this browser — recent edits exist only on this page
-            and will be lost if you close it. Download a backup now.
-          </span>
-          <button type="button" className="btn" onClick={exportJson}>
-            Download backup
+          <span>Couldn't load your applications. {sync.loadError.message}</span>
+          <button type="button" className="btn" onClick={sync.reload}>
+            Try again
           </button>
         </div>
       )}
 
-      {route.name !== 'detail' && (
+      {route.name !== 'detail' && !loading && !accountIsEmpty && (
         <>
           <Toolbar
             onAdd={addApplication}
             onExportMarkdown={exportMarkdown}
             onExportJson={exportJson}
-            onImportJson={importJson}
-            onReset={resetToSeed}
             view={view}
             onViewChange={setView}
           />
@@ -427,56 +456,7 @@ export default function App({ account, onLogout }) {
         </p>
       )}
 
-      {route.name === 'detail' ? (
-        <ApplicationDetailPage
-          application={applications.find((app) => app.id === route.id)}
-          onUpdate={updateApplication}
-          onRemove={removeApplication}
-        />
-      ) : (
-        <>
-          {view === 'table' ? (
-            <TrackerTable
-              applications={visible}
-              sort={sort}
-              onSortChange={setSort}
-              onUpdate={updateApplication}
-              onRemove={removeApplication}
-              emptyMessage={emptyMessage}
-              fillTo={fillTo}
-              pendingId={pendingId}
-              onCommitPending={commitPending}
-            />
-          ) : visible.length === 0 ? (
-            <p className="cards__empty">{emptyMessage}</p>
-          ) : (
-            <section className="cards" aria-label="Applications">
-              {visible.map((app) => (
-                <ApplicationSummaryCard
-                  key={app.id}
-                  app={app}
-                  facets={facetsById.get(app.id)}
-                  pending={app.id === pendingId}
-                  onRemove={removeApplication}
-                  registerRef={registerRef}
-                />
-              ))}
-
-              {Array.from({ length: fillerCards }, (_, index) => (
-                <div key={`filler-${index}`} className="cards__filler" aria-hidden="true" />
-              ))}
-            </section>
-          )}
-
-          <Pagination
-            page={safePage}
-            pageCount={pageCount}
-            total={ordered.length}
-            pageSize={pageSize}
-            onChange={setPage}
-          />
-        </>
-      )}
+      {renderMain()}
     </div>
   );
 }

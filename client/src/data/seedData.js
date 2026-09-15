@@ -1,7 +1,6 @@
-// Seed data — fictional example applications.
-// This only loads the first time you open the app. After that your saved
-// data in localStorage wins. Use "Reset to seed data" in the toolbar to
-// come back to this starting point.
+// Seed data — fictional example applications. Nothing loads it while
+// applications live on the server; demo accounts will start with it
+// (ADR-0005).
 
 export const seedApplications = [
   {

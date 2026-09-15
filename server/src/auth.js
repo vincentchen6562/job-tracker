@@ -43,6 +43,13 @@ function startSession(req, account) {
   });
 }
 
+// Guards routes that act on an account's data. Account deletion ends every
+// session, so a session holding an account ID is enough to go on.
+export function requireLogin(req, res, next) {
+  if (!req.session.accountId) return res.status(401).json({ error: 'Not logged in.' });
+  next();
+}
+
 export function createAuthRouter(config, db) {
   const Account = accountModel(db);
   const router = express.Router();

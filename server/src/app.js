@@ -1,6 +1,8 @@
 import express from 'express';
 import helmet from 'helmet';
+import { createApplicationsRouter } from './applications.js';
 import { createAuthRouter } from './auth.js';
+import { handleErrors } from './errors.js';
 import { createRateLimiter, requireJson } from './protections.js';
 import { sessionMiddleware } from './sessions.js';
 
@@ -37,12 +39,16 @@ export function createApp(config, db) {
   app.use(sessionMiddleware(config, db));
 
   app.use('/api/auth', createAuthRouter(config, db));
+  app.use('/api/applications', createApplicationsRouter(db));
 
   // In production the built client comes from this same origin (ADR-0004). In
   // development the Vite dev server serves it and forwards /api here.
   if (config.nodeEnv === 'production') {
     app.use(express.static(config.clientDistPath));
   }
+
+  // Last, so it catches errors from every route above.
+  app.use(handleErrors);
 
   return app;
 }
