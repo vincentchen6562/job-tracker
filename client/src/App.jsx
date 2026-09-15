@@ -7,6 +7,7 @@ import Pagination from './components/Pagination';
 import RestoreBackupButton from './components/RestoreBackupButton';
 import SaveStatus from './components/SaveStatus';
 import SessionEndedDialog from './components/SessionEndedDialog';
+import AccountPage from './pages/AccountPage';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useApplicationsSync } from './hooks/useApplicationsSync';
@@ -59,7 +60,14 @@ function matchesQuery(app, facets, tokens) {
 
 // `notice` is a message that stays until dismissed, for something the account
 // holder mustn't miss.
-export default function App({ account, onLogout, onSwitchAccount, notice, onDismissNotice }) {
+export default function App({
+  account,
+  onLogout,
+  onAccountDeleted,
+  onSwitchAccount,
+  notice,
+  onDismissNotice,
+}) {
   const route = useHashRoute();
   const [message, setMessage] = useState('');
   const [sessionEnded, setSessionEnded] = useState(false);
@@ -382,6 +390,19 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
       );
     }
 
+    if (route.name === 'account') {
+      return (
+        <AccountPage
+          account={account}
+          applicationCount={applications.length}
+          onDownloadBackup={exportJson}
+          waitForSaves={sync.saveEverything}
+          onSessionEnded={() => setSessionEnded(true)}
+          onDeleted={onAccountDeleted}
+        />
+      );
+    }
+
     if (route.name === 'detail') {
       return (
         <ApplicationDetailPage
@@ -472,6 +493,9 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
           <span className="masthead__account" title="Logged in as">
             {account.email}
           </span>
+          <a className="btn btn--quiet" href="#/account">
+            Account
+          </a>
           <button type="button" className="btn btn--quiet" onClick={logOut}>
             Log out
           </button>
@@ -505,7 +529,7 @@ export default function App({ account, onLogout, onSwitchAccount, notice, onDism
         </div>
       )}
 
-      {route.name !== 'detail' && !loading && !accountIsEmpty && (
+      {route.name === 'home' && !loading && !accountIsEmpty && (
         <>
           <Toolbar
             onAdd={addApplication}

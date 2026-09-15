@@ -39,6 +39,21 @@ npm run build     # output lands in client/dist/
 npm run preview   # serve that build locally with Vite
 ```
 
+## Resetting a password
+
+There's no forgot-password flow yet (ADR-0002). To let someone back in to a
+locked-out account, run the admin script with the account's email. It gives the
+account a random new password, logs it out everywhere, and prints the password
+to pass on. They can change it on the account page once they've logged in.
+
+```bash
+npm run reset-password --workspace server -- someone@example.com
+```
+
+It acts on the database in `MONGODB_URI`, read from `server/.env` unless it's
+already set in the environment. To reset a production account, set production's
+connection string in the environment for that one command.
+
 ## How it works
 
 - **Everything saves automatically** to this browser's localStorage. There is no

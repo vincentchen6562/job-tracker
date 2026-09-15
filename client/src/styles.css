@@ -175,9 +175,10 @@ body {
   color: var(--ink-soft);
 }
 
-/* The login form over the tracker when the session has ended. The form
-   brings its own card, so the dialog itself is invisible. */
-.session-dialog {
+/* A form over the page, such as logging back in when the session has ended
+   or confirming the account's deletion. The form brings its own card, so the
+   dialog itself is invisible. */
+.form-dialog {
   width: min(400px, calc(100vw - 32px));
   max-width: none;
   padding: 0;
@@ -186,11 +187,11 @@ body {
   color: var(--ink);
 }
 
-.session-dialog::backdrop {
+.form-dialog::backdrop {
   background: var(--backdrop);
 }
 
-.session-dialog .auth__form {
+.form-dialog .auth__form {
   max-width: none;
   margin: 0;
 }
@@ -201,6 +202,16 @@ body {
   border-left: 3px solid var(--danger);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: var(--danger-soft);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.auth__success {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--success);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--success-soft);
   color: var(--ink);
   font-size: 13px;
 }
@@ -224,6 +235,29 @@ body {
 
 .auth__switch a {
   color: var(--accent);
+}
+
+/* Account page -------------------------------------------------------- */
+
+.account-page__title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.account-page__email {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* The page's cards stack on the left, unlike the centred login form. Only
+   direct children, so the confirmation's form in its dialog is left alone. */
+.account-page > .auth__form {
+  max-width: 480px;
+  margin: 20px 0 0;
 }
 
 /* Save indicator ------------------------------------------------------ */
@@ -431,6 +465,31 @@ textarea:focus-visible {
 
 .btn--quiet {
   color: var(--ink-soft);
+}
+
+/* A link that looks like a button, such as Account in the masthead. */
+a.btn {
+  text-decoration: none;
+}
+
+/* For what can't be undone. Takes over the hover state, as .btn--primary
+   does. */
+.btn--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  font-weight: 500;
+}
+
+:root[data-theme='dark'] .btn--danger {
+  color: #10141a;
+}
+
+.btn--danger:hover,
+:root[data-theme='dark'] .btn--danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* View toggle -------------------------------------------------------- */

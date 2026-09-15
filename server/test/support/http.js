@@ -38,3 +38,8 @@ export async function loggedInBrowser(app, email) {
   }
   return browser;
 }
+
+// A login attempt from a new browser, for finding out which password works.
+export function logIn(app, email, password) {
+  return request(app).post('/api/auth/login').send({ email, password });
+}

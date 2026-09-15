@@ -8,6 +8,7 @@ function parseHash() {
   const hash = window.location.hash.replace(/^#/, '') || '/';
   if (hash === '/login') return { name: 'login' };
   if (hash === '/signup') return { name: 'signup' };
+  if (hash === '/account') return { name: 'account' };
   const match = hash.match(/^\/app\/(.+)$/);
   if (match) return { name: 'detail', id: decodeURIComponent(match[1]) };
   return { name: 'home' };

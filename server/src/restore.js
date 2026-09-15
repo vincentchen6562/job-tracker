@@ -1,6 +1,6 @@
 import express from 'express';
 import { applicationModel, pickFields, publicApplication } from './applications.js';
-import { requireLogin } from './auth.js';
+import { requireLogin } from './sessions.js';
 
 // Version 2 backups carry attachments as base64 text, so a backup can be far
 // bigger than any other request. The attachments are dropped, but the file

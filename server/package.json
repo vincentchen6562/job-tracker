@@ -10,7 +10,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "test": "vitest run",
-    "check:transactions": "node scripts/check-transactions.js"
+    "check:transactions": "node scripts/check-transactions.js",
+    "reset-password": "node scripts/reset-password.js"
   },
   "dependencies": {
     "@job-tracker/shared": "*",

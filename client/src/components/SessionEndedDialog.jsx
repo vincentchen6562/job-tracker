@@ -18,7 +18,7 @@ export default function SessionEndedDialog({ open, email, onLoggedIn, onClose })
   }, [open]);
 
   return (
-    <dialog ref={dialog} className="session-dialog" onClose={onClose}>
+    <dialog ref={dialog} className="form-dialog" onClose={onClose}>
       {open && (
         <AuthForm
           mode="login"

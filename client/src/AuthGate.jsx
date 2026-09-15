@@ -48,6 +48,12 @@ export default function AuthGate() {
     setAccount(null);
   }
 
+  // Deleting the account ended its sessions, so it's back to logging in.
+  function accountDeleted() {
+    setNotice('');
+    setAccount(null);
+  }
+
   // Logging in to another account after the session ended. The tracker is
   // keyed by account, so the old one closes with its held edits and they're
   // never saved to this account.
@@ -95,6 +101,7 @@ export default function AuthGate() {
       key={account.id}
       account={account}
       onLogout={logOut}
+      onAccountDeleted={accountDeleted}
       onSwitchAccount={switchAccount}
       notice={notice}
       onDismissNotice={() => setNotice('')}

@@ -6,7 +6,7 @@ import {
 } from '@job-tracker/shared';
 import express from 'express';
 import mongoose from 'mongoose';
-import { requireLogin } from './auth.js';
+import { requireLogin } from './sessions.js';
 
 // Every field the browser edits, as the shared package defines them. Only
 // these are ever written or sent back.
