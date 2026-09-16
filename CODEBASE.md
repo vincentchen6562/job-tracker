@@ -865,9 +865,9 @@ binary outside `node_modules` so `npm ci` doesn't delete it.
 - **`applications` is the only source of truth** in the client. If you add a
   feature, derive it in `App.jsx` rather than storing a second copy — that's the
   pattern the whole file follows.
-- **The README's structure diagram is stale.** It still shows the pre-workspaces
-  `src/` layout with `components/ApplicationCard.jsx`, and its "Editing" section
-  still says "Edit notes". Fixing it is the other half of issue #14.
+- **The [README](README.md) owns running and deploying**; this file owns
+  changing. When you add something a newcomer has to *do* — an environment
+  variable, a command, a deploy step — it belongs there, not here.
 
 ---
 
