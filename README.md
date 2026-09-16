@@ -58,13 +58,35 @@ connection string in the environment for that one command.
 
 A demo account has no email, so the unique index on `email` has to allow
 accounts without one. A database created before demo accounts existed has the
-old index, which treats every demo as the same missing value and refuses the
-second one with a duplicate key error. Drop it once; the server rebuilds it as
-a sparse index the next time it starts.
+old index, which treats every demo as the same missing value: the first demo
+works, and every later one fails with a duplicate key error until that first
+one expires, so "Try the demo" looks intermittently broken.
 
-```js
-db.accounts.dropIndex('email_1')
+MongoDB won't redefine an index that already exists under the same name, so
+the old one has to be dropped by hand. Indexes are only built when the server
+starts, so it needs restarting afterwards to get the replacement. Nothing
+keeps emails unique in between, so keep the gap short.
+
+This isn't a change to the code: it's one command against each database that
+predates demo accounts. Locally, run it from `server/`, where it reads the
+connection string the same way the server does:
+
+```bash
+mongosh "$(grep '^MONGODB_URI=' .env | cut -d= -f2-)" --eval "db.accounts.dropIndex('email_1')"
 ```
+
+then restart `npm run dev`.
+
+In production the database is the one named in Render's `MONGODB_URI`, not
+`job-tracker-dev`. Drop the index from the Atlas UI — Browse Collections, that
+database, the `accounts` collection, the Indexes tab — and then deploy. In
+that order the deploy's own restart builds the replacement; deploy first and
+the new code meets the same conflict, leaving the old index in place until you
+drop it and restart again.
+
+To check, run the same command with `getIndexes()`: `email_1` should be back
+as `unique: true, sparse: true`. An "index not found" error means that
+database never had the old index and there's nothing to do.
 
 New databases need nothing: the index is created correctly the first time.
 
