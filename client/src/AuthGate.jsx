@@ -34,13 +34,17 @@ export default function AuthGate() {
   }, [attempt]);
 
   const onAuthRoute = AUTH_ROUTES.includes(route.name);
+  // A demo account is the one kind allowed onto the sign-up screen while
+  // logged in: signing up is how a visitor turns the demo into an account
+  // that keeps their applications (ADR-0005).
+  const leavingDemo = Boolean(account?.isDemo) && route.name === 'signup';
 
   // Replacing rather than pushing, so Back doesn't return to a screen that
   // would only redirect again.
   useEffect(() => {
     if (account === null && !onAuthRoute) window.location.replace('#/login');
-    if (account && onAuthRoute) window.location.replace('#/');
-  }, [account, onAuthRoute]);
+    if (account && onAuthRoute && !leavingDemo) window.location.replace('#/');
+  }, [account, onAuthRoute, leavingDemo]);
 
   async function logOut() {
     await api('POST', '/auth/logout');
@@ -94,6 +98,12 @@ export default function AuthGate() {
     return onAuthRoute ? (
       <AuthPage key={route.name} mode={route.name} onAuthenticated={setAccount} />
     ) : null;
+  }
+
+  // The demo is still open behind this; signing up swaps it for the new
+  // account, and its unsaved edits go with it.
+  if (leavingDemo) {
+    return <AuthPage key="signup-from-demo" mode="signup" fromDemo onAuthenticated={setAccount} />;
   }
 
   return onAuthRoute ? null : (

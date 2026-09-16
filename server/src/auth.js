@@ -9,8 +9,9 @@ import {
   publicAccount,
   setPassword,
 } from './accounts.js';
+import { createDemoAccount, requireRealAccount } from './demo.js';
 import { createRateLimiter } from './protections.js';
-import { SESSION_COOKIE, requireLogin } from './sessions.js';
+import { SESSION_COOKIE, demoHasExpired, requireLogin } from './sessions.js';
 
 // Compared against when there's no password to check, such as for an email no
 // account has, at the same cost as a real hash, so every failure takes as long.
@@ -46,6 +47,17 @@ function startSession(req, account) {
     req.session.regenerate((error) => {
       if (error) return reject(error);
       req.session.accountId = account._id.toString();
+      // Carried so the applications saved during the session can be given the
+      // same expiry as the demo they're added to (ADR-0005).
+      if (account.isDemo) {
+        req.session.demoExpiresAt = account.expiresAt.toISOString();
+        // The cookie ends with the demo rather than lasting the usual thirty
+        // days, which would leave a visitor logged in to a deleted account.
+        // Later requests are re-pinned by the session middleware.
+        const remaining = account.expiresAt.getTime() - Date.now();
+        req.session.cookie.originalMaxAge = remaining;
+        req.session.cookie.maxAge = remaining;
+      }
       resolve();
     });
   });
@@ -65,6 +77,10 @@ export function createAuthRouter(config, db) {
   // One limiter on every route that checks a password, so guesses can't dodge
   // it by switching between them.
   const authLimit = createRateLimiter(config.rateLimits.auth);
+  // Its own, much smaller allowance: making a demo takes no password, so the
+  // auth limit protecting password guesses is the wrong shape for it.
+  const demoLimit = createRateLimiter(config.rateLimits.demo);
+  const realAccount = requireRealAccount(db);
 
   router.post('/signup', authLimit, async (req, res) => {
     const email = normalizeEmail(req.body.email);
@@ -93,6 +109,14 @@ export function createAuthRouter(config, db) {
     res.status(201).json(publicAccount(account));
   });
 
+  // No email and no password: the visitor is given an account of their own,
+  // holding the seed data, and logged straight in to it (ADR-0005).
+  router.post('/demo', demoLimit, async (req, res) => {
+    const account = await createDemoAccount(db);
+    await startSession(req, account);
+    res.status(201).json(publicAccount(account));
+  });
+
   router.post('/login', authLimit, async (req, res) => {
     const email = normalizeEmail(req.body.email);
     const { password } = req.body;
@@ -113,7 +137,7 @@ export function createAuthRouter(config, db) {
     res.clearCookie(SESSION_COOKIE).status(204).end();
   });
 
-  router.put('/password', authLimit, requireLogin, async (req, res) => {
+  router.put('/password', authLimit, requireLogin, realAccount, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     if (!isAllowedPassword(newPassword)) {
       return res.status(400).json({ error: PASSWORD_RULE });
@@ -128,7 +152,7 @@ export function createAuthRouter(config, db) {
 
   // Asks for the password again, so a browser left logged in can't be used to
   // delete the account.
-  router.delete('/account', authLimit, requireLogin, async (req, res) => {
+  router.delete('/account', authLimit, requireLogin, realAccount, async (req, res) => {
     const { accountId } = req.session;
     if (!(await passwordMatches(await Account.findById(accountId), req.body.password))) {
       return res.status(403).json({ error: 'Password is incorrect.' });
@@ -141,7 +165,10 @@ export function createAuthRouter(config, db) {
   });
 
   router.get('/me', async (req, res) => {
-    const account = req.session.accountId && (await Account.findById(req.session.accountId));
+    const account =
+      req.session.accountId &&
+      !demoHasExpired(req) &&
+      (await Account.findById(req.session.accountId));
     if (!account) return res.status(401).json({ error: 'Not logged in.' });
     res.json(publicAccount(account));
   });

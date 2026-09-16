@@ -14,6 +14,7 @@ const testConfig = {
   rateLimits: {
     auth: { limit: 1000, windowMs: FIFTEEN_MINUTES_MS },
     api: { limit: 1000, windowMs: FIFTEEN_MINUTES_MS },
+    demo: { limit: 1000, windowMs: FIFTEEN_MINUTES_MS },
   },
 };
 
@@ -28,7 +29,17 @@ export function useTestApp(configOverrides = {}) {
     context.db = await connectDatabase(inject('mongoUri'), {
       dbName: `test-${randomUUID()}`,
     });
-    context.app = createApp({ ...testConfig, ...configOverrides }, context.db);
+    // The limits are merged rather than replaced, so a test that lowers one
+    // of them keeps the generous defaults for the rest instead of leaving the
+    // app with no setting for a limiter it still builds.
+    context.app = createApp(
+      {
+        ...testConfig,
+        ...configOverrides,
+        rateLimits: { ...testConfig.rateLimits, ...configOverrides.rateLimits },
+      },
+      context.db,
+    );
   });
 
   afterAll(async () => {

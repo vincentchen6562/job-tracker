@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { PASSWORD_MAX, PASSWORD_MIN } from '@job-tracker/shared';
+import { DEMO_LIFETIME_HOURS, PASSWORD_MAX, PASSWORD_MIN } from '@job-tracker/shared';
 import { api } from '../utils/api';
 
 // Where an account holder changes their password or deletes their account.
@@ -21,18 +21,52 @@ export default function AccountPage({
       </a>
 
       <h2 className="account-page__title">Account</h2>
-      <p className="account-page__email">Logged in as {account.email}</p>
 
-      <ChangePassword accountId={account.id} onSessionEnded={onSessionEnded} />
-      <DeleteAccount
-        account={account}
-        applicationCount={applicationCount}
-        onDownloadBackup={onDownloadBackup}
-        waitForSaves={waitForSaves}
-        onSessionEnded={onSessionEnded}
-        onDeleted={onDeleted}
-      />
+      {account.isDemo ? (
+        <>
+          <p className="account-page__email">You're trying the demo.</p>
+          <SignUpInstead onDownloadBackup={onDownloadBackup} />
+        </>
+      ) : (
+        <>
+          <p className="account-page__email">Logged in as {account.email}</p>
+
+          <ChangePassword accountId={account.id} onSessionEnded={onSessionEnded} />
+          <DeleteAccount
+            account={account}
+            applicationCount={applicationCount}
+            onDownloadBackup={onDownloadBackup}
+            waitForSaves={waitForSaves}
+            onSessionEnded={onSessionEnded}
+            onDeleted={onDeleted}
+          />
+        </>
+      )}
     </div>
+  );
+}
+
+// A demo has no password to change and deletes itself, so the settings a real
+// account has are replaced by the way out of the demo (ADR-0005).
+function SignUpInstead({ onDownloadBackup }) {
+  return (
+    <section className="auth__form card">
+      <h3 className="auth__title">Sign up for a real account</h3>
+      <p className="auth__intro">
+        This demo account and everything in it are deleted {DEMO_LIFETIME_HOURS} hours after it
+        was made. A real account keeps your applications, on every device you log in on. It
+        starts empty: the ones in this demo don't carry over, so download a backup first if you
+        want them.
+      </p>
+      <div className="account-page__demo-actions">
+        <button type="button" className="btn" onClick={onDownloadBackup}>
+          Download backup
+        </button>
+        <a className="btn btn--primary" href="#/signup">
+          Sign up
+        </a>
+      </div>
+    </section>
   );
 }
 

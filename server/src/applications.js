@@ -6,7 +6,7 @@ import {
 } from '@job-tracker/shared';
 import express from 'express';
 import mongoose from 'mongoose';
-import { requireLogin } from './sessions.js';
+import { demoExpiry, requireLogin } from './sessions.js';
 
 // Every field the browser edits, as the shared package defines them. Only
 // these are ever written or sent back.
@@ -46,6 +46,10 @@ const applicationSchema = new mongoose.Schema(
     // Made by the browser, so it only has to be unique within one account
     // (ADR-0007).
     id: { type: String, required: true },
+    // Set only on a demo account's applications, so they go when it does
+    // (ADR-0005). Not one of the browser's fields, so it's never sent back
+    // and a request can't set it.
+    expiresAt: { type: Date },
     ...fieldDefinitions(),
   },
   // Mongoose's own `id` virtual would shadow the browser's `id` field.
@@ -53,6 +57,10 @@ const applicationSchema = new mongoose.Schema(
 );
 
 applicationSchema.index({ accountId: 1, id: 1 }, { unique: true });
+
+// The same TTL index as the accounts have, so a demo's applications go when
+// it does. A real account's applications have no expiry and are left alone.
+applicationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Looked up per connection, like the account model, since each test file
 // brings its own.
@@ -93,9 +101,15 @@ export function createApplicationsRouter(db) {
   // first when `create` is set. Resolves with the saved application, or null
   // when there's none to change.
   function saveFields(req, { create }) {
+    const expiresAt = demoExpiry(req);
     return Application.findOneAndUpdate(
       ownApplication(req),
-      { $set: pickFields(req.body) },
+      {
+        $set: pickFields(req.body),
+        // Only as it's created, and only in a demo: an application takes the
+        // expiry of the account it's added to, so nothing outlives the demo.
+        ...(expiresAt && { $setOnInsert: { expiresAt } }),
+      },
       { upsert: create, returnDocument: 'after', runValidators: true, sanitizeFilter: true },
     );
   }

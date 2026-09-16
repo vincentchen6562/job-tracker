@@ -39,11 +39,17 @@ export function loadConfig(env = process.env) {
     port: env.PORT ? Number(env.PORT) : DEFAULT_PORT,
     clientDistPath: DEFAULT_CLIENT_DIST_PATH,
     // Per IP. Sign-up and login share the auth allowance; the API one covers
-    // every API request and has to leave room for autosave.
+    // every API request and has to leave room for autosave. The demo one is
+    // its own, and much smaller: a demo takes no password to make and arrives
+    // holding a set of seed applications.
     rateLimits: {
       auth: {
         limit: readPositiveNumber(env, 'RATE_LIMIT_AUTH_MAX', 10),
         windowMs: readPositiveNumber(env, 'RATE_LIMIT_AUTH_WINDOW_MINUTES', 15) * MINUTE_MS,
+      },
+      demo: {
+        limit: readPositiveNumber(env, 'RATE_LIMIT_DEMO_MAX', 5),
+        windowMs: readPositiveNumber(env, 'RATE_LIMIT_DEMO_WINDOW_MINUTES', 60) * MINUTE_MS,
       },
       api: {
         limit: readPositiveNumber(env, 'RATE_LIMIT_API_MAX', 1000),

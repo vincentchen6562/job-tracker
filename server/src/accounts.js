@@ -7,13 +7,35 @@ export const BCRYPT_COST = 12;
 
 const accountSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, trim: true, lowercase: true, unique: true },
+    // Absent for demo accounts, which are made without one. Unique among the
+    // accounts that have one, so the index is sparse: every demo would
+    // otherwise index as the same null and only the first could be created.
+    email: {
+      type: String,
+      required: [
+        function emailUnlessDemo() {
+          return !this.isDemo;
+        },
+        'Email is required.',
+      ],
+      trim: true,
+      lowercase: true,
+      index: { unique: true, sparse: true },
+    },
     // Absent for demo accounts, which have no password.
     passwordHash: { type: String },
     isDemo: { type: Boolean, default: false },
+    // Set only on demo accounts, which are deleted once it passes (ADR-0005).
+    // Absent on real accounts, so nothing ever expires them.
+    expiresAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
+
+// Deletes a demo account as soon as its expiry passes, with no scheduled job
+// of our own to run (ADR-0005). Documents without the field are left alone,
+// which is every real account.
+accountSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Models belong to a connection, and each test file brings its own, so the
 // model is looked up on the connection it's asked for rather than made once.

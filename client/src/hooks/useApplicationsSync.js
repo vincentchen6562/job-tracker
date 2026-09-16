@@ -61,8 +61,9 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
   // A request still queued when the tracker closes, such as after switching
   // accounts, is refused the same way.
   const unmounted = useRef(false);
-  // A restore on its way, as a promise that never rejects, or null.
-  const restoring = useRef(null);
+  // A replacement of every application on its way — a restore or a reset to
+  // the seed data — as a promise that never rejects, or null.
+  const replacing = useRef(null);
 
   // Declared before the load, so a remount clears it before loading again.
   useEffect(() => {
@@ -121,7 +122,7 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
 
   function refreshStatus() {
     if (failedFields.current.size > 0) setSaveStatus('failed');
-    else if (unsent.current.size > 0 || inFlight.current.size > 0 || restoring.current) {
+    else if (unsent.current.size > 0 || inFlight.current.size > 0 || replacing.current) {
       setSaveStatus('saving');
     }
     else setSaveStatus('saved');
@@ -140,9 +141,9 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
   // Runs `send` once any earlier request for the same application has
   // settled, and keeps the indicator in step. Resolves or rejects with it.
   function enqueue(id, send) {
-    // A restore on its way is waited for too, so nothing lands in the account
-    // after the backup has replaced it.
-    const previous = Promise.all([inFlight.current.get(id), restoring.current]);
+    // A replacement on its way is waited for too, so nothing lands in the
+    // account after the backup or the seed data has replaced it.
+    const previous = Promise.all([inFlight.current.get(id), replacing.current]);
     const request = previous.then(send);
     const settled = request
       .catch(() => {})
@@ -296,32 +297,42 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
     else saveEverything();
   }
 
-  // Replaces every application with a backup's, given the file's text as it
-  // was read. Edits waiting to go out are saved first, so they're kept if the
-  // server refuses the backup. Edits made while the restore is on its way go
-  // with the applications it replaces. Resolves with the restored
-  // applications.
-  async function restore(backup) {
+  // Replaces every application with the ones `send` answers with. Edits
+  // waiting to go out are saved first, so they're kept if the server refuses.
+  // Edits made while it's on its way go with the applications it replaces.
+  async function replaceEverything(send) {
     await saveEverything();
-    const request = callServer('POST', '/restore', backup, { raw: true }).then((restored) => {
+    const request = send().then((replacement) => {
       timers.current.forEach(clearTimeout);
       timers.current.clear();
       unsent.current.clear();
       failedFields.current.clear();
-      onServer.current = new Set(restored.map((application) => application.id));
+      onServer.current = new Set(replacement.map((application) => application.id));
       sentPut.current.clear();
-      setApplications(restored);
-      return restored;
+      setApplications(replacement);
+      return replacement;
     });
     const settled = request
       .catch(() => {})
       .finally(() => {
-        if (restoring.current === settled) restoring.current = null;
+        if (replacing.current === settled) replacing.current = null;
         refreshStatus();
       });
-    restoring.current = settled;
+    replacing.current = settled;
     refreshStatus();
     return request;
+  }
+
+  // Takes a backup's applications, given the file's text as it was read.
+  // Resolves with the restored applications.
+  function restore(backup) {
+    return replaceEverything(() => callServer('POST', '/restore', backup, { raw: true }));
+  }
+
+  // Puts a demo back to the applications it started with. The server refuses
+  // this for a real account, which has no seed data to return to.
+  function resetToSeed() {
+    return replaceEverything(() => callServer('POST', '/applications/reset-to-seed'));
   }
 
   return {
@@ -333,6 +344,7 @@ export function useApplicationsSync({ accountId, onSaveRejected, onSessionEnded 
     saveEverything,
     resume,
     restore,
+    resetToSeed,
     add,
     update,
     remove,

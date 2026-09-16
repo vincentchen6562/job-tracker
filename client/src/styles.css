@@ -237,6 +237,23 @@ body {
   color: var(--accent);
 }
 
+/* "Try the demo", under the login form's own submit button. */
+.auth__demo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Separates the demo from the email and password above it. */
+.auth__or {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
 /* Account page -------------------------------------------------------- */
 
 .account-page__title {
@@ -251,6 +268,13 @@ body {
   margin: 0;
   font-size: 13.5px;
   color: var(--ink-soft);
+}
+
+/* The sign-up link sits on its own line, like the delete button it replaces
+   in a demo account. */
+.account-page__demo-actions {
+  display: flex;
+  gap: 8px;
 }
 
 /* The page's cards stack on the left, unlike the centred login form. Only

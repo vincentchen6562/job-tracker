@@ -1,6 +1,6 @@
 import express from 'express';
 import { applicationModel, pickFields, publicApplication } from './applications.js';
-import { requireLogin } from './sessions.js';
+import { demoExpiry, requireLogin } from './sessions.js';
 
 // Version 2 backups carry attachments as base64 text, so a backup can be far
 // bigger than any other request. The attachments are dropped, but the file
@@ -70,12 +70,18 @@ export function createRestoreRouter(db) {
     if (!applications) return res.status(400).json(NOT_A_BACKUP);
 
     const { accountId } = req.session;
+    // A demo can restore a backup too, and what it restores expires with it.
+    const expiresAt = demoExpiry(req);
     let restored;
     try {
       restored = await db.transaction(async (session) => {
         await Application.deleteMany({ accountId }, { session });
         return Application.insertMany(
-          applications.map((application) => ({ ...convertApplication(application), accountId })),
+          applications.map((application) => ({
+            ...convertApplication(application),
+            accountId,
+            expiresAt,
+          })),
           { session },
         );
       });

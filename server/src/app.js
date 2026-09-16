@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { createApplicationsRouter } from './applications.js';
 import { createAuthRouter } from './auth.js';
+import { createDemoRouter } from './demo.js';
 import { handleErrors } from './errors.js';
 import { createRateLimiter, requireJson } from './protections.js';
 import { createRestoreRouter } from './restore.js';
@@ -44,6 +45,9 @@ export function createApp(config, db) {
   app.use(express.json());
 
   app.use('/api/auth', createAuthRouter(config, db));
+  // Before the applications router, which owns the rest of that path, so the
+  // reset doesn't fall through its routes first.
+  app.use('/api/applications/reset-to-seed', createDemoRouter(db));
   app.use('/api/applications', createApplicationsRouter(db));
 
   // In production the built client comes from this same origin (ADR-0004). In

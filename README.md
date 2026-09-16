@@ -54,17 +54,35 @@ It acts on the database in `MONGODB_URI`, read from `server/.env` unless it's
 already set in the environment. To reset a production account, set production's
 connection string in the environment for that one command.
 
+## Upgrading a database made before demo accounts
+
+A demo account has no email, so the unique index on `email` has to allow
+accounts without one. A database created before demo accounts existed has the
+old index, which treats every demo as the same missing value and refuses the
+second one with a duplicate key error. Drop it once; the server rebuilds it as
+a sparse index the next time it starts.
+
+```js
+db.accounts.dropIndex('email_1')
+```
+
+New databases need nothing: the index is created correctly the first time.
+
 ## How it works
 
-- **Everything saves automatically** to this browser's localStorage. There is no
-  server and nothing leaves your machine.
-- Because storage is per-browser, your data won't follow you to another machine
-  or survive clearing site data. Use **Download backup** to get a JSON file, and
-  **Restore backup** to load it somewhere else.
+- **You need an account.** Everything saves to it as you type, so the tracker
+  is the same on every device you log in on.
+- **Try the demo** gives a visitor a temporary account of their own, already
+  holding the seed data, with no sign-up (ADR-0005). It and its applications
+  are deleted 24 hours later by a MongoDB TTL index. Signing up from a demo
+  starts a new, empty account: the demo's applications don't carry over.
+- Use **Download backup** to get a JSON file of every application, and
+  **Restore backup** to replace an account's applications with one.
 - **Download markdown** regenerates the tracker as a markdown document — the
   summary table plus one section per application.
-- **Reset to seed data** wipes your saved data and returns to the applications
-  in `client/src/data/seedData.js`.
+- **Reset to seed data** puts a demo back to the applications it started with.
+  It's offered only in demo accounts; a real account's applications are its
+  own, and restoring a backup is how it replaces them.
 
 ## Editing
 
@@ -91,7 +109,7 @@ src/
 │   ├── StarRating.jsx         priority stars
 │   └── Toolbar.jsx            add, export, import, reset, theme
 ├── data/
-│   └── seedData.js            starting applications and status options
+│   └── taxonomy.js            facet inference rules
 └── utils/
     ├── date.js                parses loose dates like "3 Aug 2026"
     ├── storage.js             localStorage read/write
@@ -100,7 +118,7 @@ src/
 
 ## Changing the starting data
 
-`client/src/data/seedData.js` holds the applications loaded on first run, and
+`server/src/seedData.js` holds the applications a demo account starts with, and
 `STATUS_OPTIONS` in `shared/src/statuses.js` defines the dropdown values. If you add or rename a status,
 also add a matching `--status-*` colour variable and `.status--*` rule in
 `styles.css` — the slug is the lowercased name with spaces replaced by hyphens,

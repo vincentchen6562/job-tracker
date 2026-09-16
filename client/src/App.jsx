@@ -71,7 +71,9 @@ export default function App({
   const route = useHashRoute();
   const [message, setMessage] = useState('');
   const [sessionEnded, setSessionEnded] = useState(false);
-  const [restoring, setRestoring] = useState(false);
+  // Which replacement of the whole list is under way — 'backup' or
+  // 'seed data' — or null when none is.
+  const [replacing, setReplacing] = useState(null);
   const sync = useApplicationsSync({
     accountId: account.id,
     onSaveRejected: (error) => setMessage(`A change wasn't saved. ${error.message}`),
@@ -329,6 +331,23 @@ export default function App({
     setMessage('Backup downloaded.');
   }
 
+  // What restoring a backup and resetting to the seed data have in common:
+  // both replace every application, so both hold the buttons still, bring the
+  // whole list back into view, and leave it as it was if the server refuses.
+  async function replaceApplications({ kind, replace, done, couldNot }) {
+    setReplacing(kind);
+    try {
+      const applications = await replace();
+      setPendingId(null);
+      clearFilters();
+      setMessage(done(applications));
+    } catch (error) {
+      setMessage(`${couldNot} ${error.message}`);
+    } finally {
+      setReplacing(null);
+    }
+  }
+
   // The file goes to the server as it is, and the server works out which
   // version of backup it is.
   async function restoreBackup(file) {
@@ -345,20 +364,28 @@ export default function App({
       return;
     }
 
-    setRestoring(true);
-    try {
-      const restored = await sync.restore(contents);
-      // Every restored application should be in view.
-      setPendingId(null);
-      clearFilters();
-      setMessage(
-        `Restored ${restored.length} ${restored.length === 1 ? 'application' : 'applications'}.`
-      );
-    } catch (error) {
-      setMessage(`Couldn't restore the backup, so your applications are unchanged. ${error.message}`);
-    } finally {
-      setRestoring(false);
-    }
+    await replaceApplications({
+      kind: 'backup',
+      replace: () => sync.restore(contents),
+      done: (restored) =>
+        `Restored ${restored.length} ${restored.length === 1 ? 'application' : 'applications'}.`,
+      couldNot: "Couldn't restore the backup, so your applications are unchanged.",
+    });
+  }
+
+  // Only a demo has seed data to go back to, so this is offered nowhere else.
+  async function resetToSeed() {
+    const confirmed = window.confirm(
+      "Reset the demo to the seed data? This replaces every application in it, and can't be undone.",
+    );
+    if (!confirmed) return;
+
+    await replaceApplications({
+      kind: 'seed data',
+      replace: sync.resetToSeed,
+      done: (seeded) => `Reset to the seed data — ${seeded.length} applications.`,
+      couldNot: "Couldn't reset the demo, so your applications are unchanged.",
+    });
   }
 
   // Edits go out first, since logging out ends the session they're saved
@@ -425,7 +452,21 @@ export default function App({
             <button type="button" className="btn btn--primary" onClick={addApplication}>
               Add application
             </button>
-            <RestoreBackupButton onRestore={restoreBackup} restoring={restoring} />
+            <RestoreBackupButton
+              onRestore={restoreBackup}
+              restoring={replacing === 'backup'}
+              busy={replacing !== null}
+            />
+            {account.isDemo && (
+              <button
+                type="button"
+                className="btn"
+                onClick={resetToSeed}
+                disabled={replacing !== null}
+              >
+                {replacing === 'seed data' ? 'Resetting…' : 'Reset to seed data'}
+              </button>
+            )}
           </div>
         </section>
       );
@@ -490,8 +531,11 @@ export default function App({
         </p>
         <div className="masthead__actions">
           <SaveStatus status={sync.saveStatus} onRetry={sync.retry} />
-          <span className="masthead__account" title="Logged in as">
-            {account.email}
+          <span
+            className="masthead__account"
+            title={account.isDemo ? 'You are trying the demo' : 'Logged in as'}
+          >
+            {account.email ?? 'Demo account'}
           </span>
           <a className="btn btn--quiet" href="#/account">
             Account
@@ -536,7 +580,8 @@ export default function App({
             onExportMarkdown={exportMarkdown}
             onExportJson={exportJson}
             onRestore={restoreBackup}
-            restoring={restoring}
+            onResetToSeed={account.isDemo ? resetToSeed : null}
+            replacing={replacing}
             view={view}
             onViewChange={setView}
           />
@@ -564,7 +609,9 @@ export default function App({
       <SessionEndedDialog
         open={sessionEnded}
         email={account.email}
+        isDemo={account.isDemo}
         onLoggedIn={logBackIn}
+        onDemoEnded={onAccountDeleted}
         onClose={() => setSessionEnded(false)}
       />
     </div>

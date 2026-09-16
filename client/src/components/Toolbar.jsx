@@ -1,12 +1,16 @@
 import RestoreBackupButton from './RestoreBackupButton';
 import ViewToggle from './ViewToggle';
 
+// `onResetToSeed` is only given for a demo account, which is the only kind
+// with seed data to go back to (ADR-0005). `replacing` names the replacement
+// of the whole list that is under way, if any.
 export default function Toolbar({
   onAdd,
   onExportMarkdown,
   onExportJson,
   onRestore,
-  restoring,
+  onResetToSeed,
+  replacing,
   view,
   onViewChange,
 }) {
@@ -26,7 +30,21 @@ export default function Toolbar({
         <button type="button" className="btn" onClick={onExportJson}>
           Download backup
         </button>
-        <RestoreBackupButton onRestore={onRestore} restoring={restoring} />
+        <RestoreBackupButton
+          onRestore={onRestore}
+          restoring={replacing === 'backup'}
+          busy={replacing !== null}
+        />
+        {onResetToSeed && (
+          <button
+            type="button"
+            className="btn"
+            onClick={onResetToSeed}
+            disabled={replacing !== null}
+          >
+            {replacing === 'seed data' ? 'Resetting…' : 'Reset to seed data'}
+          </button>
+        )}
       </div>
     </div>
   );

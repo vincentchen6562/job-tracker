@@ -1,6 +1,5 @@
-// Seed data — fictional example applications. Nothing loads it while
-// applications live on the server; demo accounts will start with it
-// (ADR-0005).
+// Seed data — the fictional example applications every demo account starts
+// with (ADR-0005). Nothing else loads them: a new real account starts empty.
 
 export const seedApplications = [
   {
