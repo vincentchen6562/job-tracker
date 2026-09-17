@@ -22,12 +22,12 @@ rather than running it.
 
 ## Public link
 
-**https://vincentchen6562.github.io/job-tracker/** — the front door page in
+**https://vincentchen6562.github.io/job-tracker/** is the front door page in
 `frontdoor/`, published to GitHub Pages by `.github/workflows/frontdoor.yml`.
 
 The tracker runs on a Render free web service that sleeps when idle (ADR-0010),
 so the front door shows "Waking the server…", polls `/api/health`, and opens
-the tracker at https://job-tracker-uhda.onrender.com/ once it answers — about a
+the tracker at https://job-tracker-uhda.onrender.com/ once it answers, about a
 minute from cold. The front door URL is the permanent one: if the host ever
 changes, update `TRACKER_URL` in `frontdoor/index.html` and the published link
 still works.
