@@ -1,23 +1,23 @@
 # Application tracker
 
 A tracker for a graduate job search: one place to record every job applied for
-and where each one stands. It's a MERN app — React and Vite in the browser,
-Express and MongoDB behind it — with hand-built accounts, so the same tracker
+and where each one stands. It's a MERN app, with React and Vite in the browser
+and Express and MongoDB behind it. Accounts are hand-built, so the same tracker
 appears on every device you log in to.
 
 Applications live in a table you can edit in place, or a grid of cards, with
 search, facet filters, sorting and paging over the whole account. Edits save
 themselves a moment after you stop typing.
 
-Two documents carry the background this one doesn't repeat:
+Two other documents cover what this one leaves out:
 
-- **[CONTEXT.md](CONTEXT.md)** — the vocabulary. *Application*, *Status*,
+- [CONTEXT.md](CONTEXT.md) is the vocabulary. *Application*, *Status*,
   *Facet*, *Demo account*, *Backup*, *Seed data* and the rest are defined
   there, with the words to avoid.
-- **[docs/adr/](docs/adr/)** — the decisions, and the options that were
+- [docs/adr/](docs/adr/) holds the decisions, and the options that were
   rejected. Anything below that looks arbitrary usually has an ADR behind it.
 
-[CODEBASE.md](CODEBASE.md) is the code walkthrough, for changing the thing
+[CODEBASE.md](CODEBASE.md) is the code walkthrough, for changing the code
 rather than running it.
 
 ## Public link
@@ -34,20 +34,20 @@ still works.
 
 ## How it works
 
-- **You need an account.** Sign up with an email and a password of 10–128
-  characters — no composition rules, so a passphrase or a password manager just
-  works (ADR-0002). Everything saves to the account as you type, so the tracker
-  is the same on every device you log in on. You stay logged in for 30 days,
-  extended while you keep using it.
+- You need an account. Sign up with an email and a password of 10–128
+  characters. There are no composition rules, so a passphrase or a password
+  manager just works (ADR-0002). Everything saves to the account as you type,
+  so the tracker is the same on every device you log in on. You stay logged in
+  for 30 days, extended while you keep using it.
 - **Try the demo** gives a visitor a temporary account of their own, already
   holding the seed data, with no sign-up (ADR-0005). It and its applications are
   deleted 24 hours later by a MongoDB TTL index. Signing up from a demo starts a
   new, empty account: the demo's applications don't carry over, so download a
   backup first if you want them.
-- **Nothing is stored in the browser** except your theme and whether you last
-  used the table or the cards. Applications are the server's.
-- **There's no forgot-password flow yet** (ADR-0002). An admin script covers a
-  lockout — see below.
+- The browser stores only your theme and whether you last used the table or the
+  cards. Applications live on the server.
+- There's no forgot-password flow yet (ADR-0002). An admin script covers a
+  lockout; see below.
 
 ## Using it
 
@@ -55,7 +55,7 @@ still works.
   are text fields; status is a dropdown; priority is a 0–5 star rating (click
   the same star again to clear it). **→** opens an application's detail page and
   **✕** removes it, after a confirmation.
-- **The cards view** is read-only at a glance — open a card to edit it. The
+- **The cards view** is read-only at a glance; open a card to edit it. The
   button in the toolbar switches between the two, and each device remembers
   which you chose.
 - **The detail page** is where the markdown **Details** live. **Edit details**
@@ -66,15 +66,15 @@ still works.
   (ADR-0006), so they're instant. Search needs every word to appear somewhere,
   so `auckland grad` narrows rather than widens.
 - **Category, Role type and Location** are worked out from the role, summary
-  and details when you haven't set them — shown as "Auto" with a dashed chip. Set
-  one by hand and your choice wins.
+  and details when you haven't set them, and show as "Auto" with a dashed chip.
+  Set one by hand and your choice wins.
 - **Sorting** by company, status, priority or date uses the column headers.
-  Undated applications always sort to the bottom rather than pretending to be
-  old, and statuses sort in pipeline order, not alphabetically.
+  Undated applications sort to the bottom instead of counting as very old, and
+  statuses sort in pipeline order, not alphabetically.
 - **The save indicator** by your email shows Saving… / Saved / Couldn't save,
   with a Retry. If a save is still pending the browser warns you before you
   close the tab, and if your session ends you get a log-in box over the page
-  rather than losing the edit.
+  instead of losing the edit.
 - **The account page** (`#/account`) is where you change your password or
   delete your account. Changing it logs out every other device but keeps this
   one. A demo account sees a sign-up prompt there instead.
@@ -84,27 +84,27 @@ still works.
 ## Moving data in and out
 
 - **Download backup** writes a JSON file of every application in the account.
-  It's the copy you control — worth taking before you delete your account, and
-  the only way to carry a demo's applications into a real one.
+  It's the copy you keep yourself. Take one before you delete your account, and
+  it's the only way to carry a demo's applications into a real one.
 - **Restore backup** replaces every application in the account with the ones in
   a file, after a confirmation that says so. It's how an earlier tracker's data
   moves in. The restore runs in a single transaction, so a file that fails
   partway leaves the account exactly as it was.
-- **Older backups still work.** The server reads the original bare-array
-  format, the version with attachments, and the current one, converting as it
-  goes: the old one-line `notes` becomes **Summary**, the old markdown `detail`
-  becomes **Details** (ADR-0011), and attachment data is dropped (ADR-0009).
-- **Download markdown** regenerates the tracker as a readable document — the
+- Older backups still work. The server reads the original bare-array format,
+  the version with attachments, and the current one, converting as it goes: the
+  old one-line `notes` becomes **Summary**, the old markdown `detail` becomes
+  **Details** (ADR-0011), and attachment data is dropped (ADR-0009).
+- **Download markdown** regenerates the tracker as a readable document: the
   summary table plus one section per application. It exports what you're
   currently looking at, so filters apply. It can't be restored; use a backup
   for that.
 - **Reset to seed data** puts a demo back to the applications it started with.
-  It's offered only in demo accounts; a real account's applications are its own,
-  and restoring a backup is how it replaces them.
+  It's offered only in demo accounts. In a real account, restoring a backup is
+  how you replace applications.
 
 ## Running it locally
 
-You need **Node 22.12 or newer** and a MongoDB database for the server.
+You need Node 22.12 or newer and a MongoDB database for the server.
 
 ```bash
 npm install
@@ -120,15 +120,15 @@ does in production (ADR-0004).
 ### Environment variables
 
 `server/.env.example` documents all of them. The server reads `server/.env` when
-it starts and **refuses to start** without the two required ones, so a bad
-deploy fails loudly instead of running insecurely.
+it starts and refuses to start without the two required ones, so a bad deploy
+fails loudly instead of running insecurely.
 
 | Variable | Required | Notes |
 |---|---|---|
 | `MONGODB_URI` | yes | Connection string, including the database name |
 | `SESSION_SECRET` | yes | A long random string; use a different one in production |
 | `NODE_ENV` | no | `development` or `production`; only production serves the built client |
-| `PORT` | no | Defaults to 3000 — keep it there in development, since Vite forwards to that port |
+| `PORT` | no | Defaults to 3000; keep it there in development, since Vite forwards to that port |
 | `RATE_LIMIT_*` | no | Per-IP limits for auth, the API and demo creation; the defaults are in the example file |
 
 A secret you can paste:
@@ -139,15 +139,14 @@ node -e "console.log(crypto.randomBytes(32).toString('hex'))"
 
 ### The development database
 
-**Development uses its own Atlas database and its own database user**, separate
+Development uses its own Atlas database and its own database user, separate
 from production, so an experiment can't damage the real tracker. It's a
-different database on the same free cluster — the example connection string ends
+different database on the same free cluster: the example connection string ends
 `/job-tracker-dev`, where production's ends `/job-tracker`. URL-encode any
 special characters in the password.
 
-The database has to be a **replica set** for restore's transaction to run.
-Atlas is one by default; a plain local `mongod` is not. To confirm a database
-can do it:
+The database has to be a replica set for restore's transaction to run. Atlas is
+one by default; a plain local `mongod` is not. To confirm a database can do it:
 
 ```bash
 npm run check:transactions --workspace server
@@ -171,8 +170,8 @@ npm test
 
 115 tests across 12 files, run by Vitest. They drive the real Express app over
 HTTP with Supertest, against an in-memory MongoDB started as a replica set, so
-restore's transaction really runs. Each test file gets its own database. Nothing
-external is needed — no running MongoDB, no network — though the first run
+restore's transaction really runs. Each test file gets its own database. You
+need nothing external, no running MongoDB and no network, though the first run
 downloads the in-memory server's binary.
 
 The suite covers sign-up and login, sessions, ownership between accounts, the
@@ -180,37 +179,37 @@ application writes and their validation, restore of every backup version, demo
 accounts and their expiry, and the rate limits and other protections. The client
 is checked by hand in the browser, which is the project's practice for UI.
 
-**CI** (`.github/workflows/ci.yml`) runs `npm ci`, `npm test` and
-`npm run build` on every push and pull request, so a change that breaks login or
-leaks data between accounts is caught before it deploys. It caches the in-memory
-MongoDB binary outside `node_modules`, where `npm ci` can't delete it.
+CI (`.github/workflows/ci.yml`) runs `npm ci`, `npm test` and `npm run build` on
+every push and pull request, so a change that breaks login or leaks data between
+accounts is caught before it deploys. It caches the in-memory MongoDB binary
+outside `node_modules`, where `npm ci` can't delete it.
 
 ## Deploying
 
 The server serves the API and the built client from one origin (ADR-0004), so
-there's one service to deploy. There's no committed hosting config — the Render
-service is set up in its dashboard — but what it needs is:
+there's one service to deploy. There's no committed hosting config, since the
+Render service is set up in its dashboard, but what it needs is:
 
 - **Build**: install dependencies and run `npm run build`, so `client/dist/`
   exists.
 - **Start**: `npm start`.
 - **Environment**: `MONGODB_URI` pointing at the production database,
-  a `SESSION_SECRET` that isn't development's, and `NODE_ENV=production` —
-  without which the server won't serve the client build, and cookies won't be
+  a `SESSION_SECRET` that isn't development's, and `NODE_ENV=production`.
+  Without it the server won't serve the client build, and cookies won't be
   `Secure`.
 
 Things to know about the free tiers (ADR-0010):
 
-- **Render sleeps** after 15 minutes without requests and takes about a minute
-  to wake. That's what the front door page exists to cover. Keeping it awake by
-  pinging was rejected: it would use 744 of the 750 free hours a month.
-- **Render suspends** a free service for the rest of the month if usage goes
-  over the allowance, so keep only this one service on the account.
-- **Atlas network access must be `0.0.0.0/0`.** Free hosts have no fixed
-  outbound IP, so there's no narrower rule to write. A strong database password
-  is what protects the cluster instead.
-- **The free Atlas tier has no automated backups.** Download backup is the only
-  copy anyone holds of an account.
+- Render sleeps after 15 minutes without requests and takes about a minute to
+  wake. That's what the front door page covers. Keeping it awake by pinging was
+  rejected: it would use 744 of the 750 free hours a month.
+- Render suspends a free service for the rest of the month if usage goes over
+  the allowance, so keep only this one service on the account.
+- Atlas network access must be `0.0.0.0/0`. Free hosts have no fixed outbound
+  IP, so there's no narrower rule to write. A strong database password is what
+  protects the cluster instead.
+- The free Atlas tier has no automated backups. Download backup is the only copy
+  anyone holds of an account.
 
 ## Resetting a password
 
@@ -240,7 +239,7 @@ the old one has to be dropped by hand. Indexes are only built when the server
 starts, so it needs restarting afterwards to get the replacement. Nothing
 keeps emails unique in between, so keep the gap short.
 
-This isn't a change to the code: it's one command against each database that
+Nothing in the code changes. Run one command against each database that
 predates demo accounts. Locally, run it from `server/`, where it reads the
 connection string the same way the server does:
 
@@ -251,11 +250,11 @@ mongosh "$(grep '^MONGODB_URI=' .env | cut -d= -f2-)" --eval "db.accounts.dropIn
 then restart `npm run dev`.
 
 In production the database is the one named in Render's `MONGODB_URI`, not
-`job-tracker-dev`. Drop the index from the Atlas UI — Browse Collections, that
-database, the `accounts` collection, the Indexes tab — and then deploy. In
-that order the deploy's own restart builds the replacement; deploy first and
-the new code meets the same conflict, leaving the old index in place until you
-drop it and restart again.
+`job-tracker-dev`. Drop the index from the Atlas UI (Browse Collections, that
+database, the `accounts` collection, the Indexes tab), then deploy. In that
+order the deploy's own restart builds the replacement; deploy first and the new
+code meets the same conflict, leaving the old index in place until you drop it
+and restart again.
 
 To check, run the same command with `getIndexes()`: `email_1` should be back
 as `unique: true, sparse: true`. An "index not found" error means that
@@ -310,7 +309,7 @@ docs/adr/               the decision records
 `server/src/seedData.js` holds the applications a demo account starts with.
 
 `STATUS_OPTIONS` in `shared/src/statuses.js` defines the statuses, in pipeline
-order — which is also their sort order and the server's validation list. If you
+order, which is also their sort order and the server's validation list. If you
 add or rename one, add a matching `--status-*` colour variable to **both**
 `:root` blocks and a `.status--*` rule in `client/src/styles.css`. The slug is
 the lowercased name with spaces replaced by hyphens, so "In progress" becomes
