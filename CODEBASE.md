@@ -556,7 +556,7 @@ backup file's text through untouched, so the browser never parses it.
 
 191 lines, no dependencies, pure functions. The premise: saved applications
 don't carry category, role type or location, so rather than asking you to
-backfill them the app **guesses** from text you already wrote.
+backfill them the app **infers** them from text you already wrote.
 
 Three rule tables, each an array of `[label, regex]`, **ordered most specific
 first** — `firstMatch` returns on the first hit. That ordering is load-bearing:
@@ -583,8 +583,9 @@ Each deriver has a wrinkle:
 falls back to an older singular `location` string.
 
 **`resolveFacets`** is what everything calls. It returns each resolved value
-*plus* an `IsAuto` flag, which is how the UI shows inferred chips with a dashed
-border and a "best guess" tooltip.
+*plus* an `IsAuto` flag, which is how the UI marks an inferred facet: a dashed
+chip on the cards, titled "… — inferred from the role, summary and details",
+and an "Auto — *value*" option in the detail page's selects.
 
 The classifier stays in the browser on purpose (ADR-0006) — search, filtering,
 sorting and paging are all client-side, over the whole account loaded at login.
@@ -697,7 +698,7 @@ adds the explanation that a real account starts empty.
 Change password and delete account, or — for a demo — neither. The
 `account.isDemo` branch at the top swaps both settings for `SignUpInstead`,
 which explains the expiry and offers **Download backup** before signing up. It's
-the client half of the server's `403` (ADR-0005).
+the client half of the `403` that `requireRealAccount` returns (§4.4).
 
 `DeleteAccount` awaits `waitForSaves()` before deleting, because a save landing
 after the account is gone would create an application with no owner. Its

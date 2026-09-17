@@ -64,8 +64,8 @@ same.
 - **Search and filters** work over the whole account, in the browser
   (ADR-0006), so they're instant. Search needs every word to appear somewhere,
   so `auckland grad` narrows rather than widens.
-- **Category, Role type and Location** are guessed from the role, summary and
-  details when you haven't set them — shown as "Auto" with a dashed chip. Set
+- **Category, Role type and Location** are worked out from the role, summary
+  and details when you haven't set them — shown as "Auto" with a dashed chip. Set
   one by hand and your choice wins.
 - **Sorting** by company, status, priority or date uses the column headers.
   Undated applications always sort to the bottom rather than pretending to be
@@ -282,8 +282,10 @@ client/                 the React app (Vite)
 
 server/                 the Express API, which also serves the client build
 ├── src/
+│   ├── index.js           the entry point: load .env, read the config, connect, listen
 │   ├── app.js             the app factory
 │   ├── config.js          environment variables, and refusing to start without them
+│   ├── database.js        the Mongoose connection
 │   ├── auth.js            sign-up, login, logout, demo, password, delete
 │   ├── accounts.js        the Account model
 │   ├── applications.js    the Application model and its routes
@@ -291,12 +293,14 @@ server/                 the Express API, which also serves the client build
 │   ├── demo.js            demo accounts and reset to seed data
 │   ├── sessions.js        MongoDB-backed sessions
 │   ├── seedData.js        what a demo account starts with
-│   └── protections.js     JSON-only writes, and rate limits
+│   ├── protections.js     JSON-only writes, and rate limits
+│   └── errors.js          the last middleware: a thrown error becomes JSON
 ├── scripts/               admin CLI
 └── test/                  the API test suite
 
 shared/src/             the status list, an application's fields, the password rule
 frontdoor/              the permanent public link (GitHub Pages)
+CONTEXT.md              the vocabulary
 docs/adr/               the decision records
 ```
 
